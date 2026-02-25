@@ -5,8 +5,8 @@ on:
   # Otomatis build saat push tag versi (contoh: v1.0.0, v1.2.3)
   push:
     tags:
-      - 'v*'
-  
+      - "v*"
+
   # Bisa juga trigger manual dari GitHub Actions UI
   workflow_dispatch:
 
@@ -16,7 +16,7 @@ jobs:
   # =========================================
   build-windows:
     runs-on: windows-latest
-    
+
     steps:
       - name: Checkout kode
         uses: actions/checkout@v4
@@ -25,15 +25,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+
+      - name: Verify Electron installed
+        run: npx electron --version
 
       - name: Build Windows installer
         env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --win nsis --x64
+
+      - name: List dist output
+        if: always()
+        run: Get-ChildItem dist -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, Length
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -42,6 +49,7 @@ jobs:
           path: |
             dist/*.exe
           retention-days: 30
+          if-no-files-found: error
 
   # =========================================
   # BUILD macOS (.dmg installer)
@@ -57,15 +65,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
-      - name: Build macOS DMG
+      - name: Verify Electron installed
+        run: npx electron --version
+
+      - name: Build macOS DMG (x64)
         env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx electron-builder --mac dmg --x64 --arm64
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --mac dmg --x64
+
+      - name: Build macOS DMG (arm64)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --mac dmg --arm64
+
+      - name: List dist output
+        if: always()
+        run: ls -laR dist/ || true
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -74,6 +95,7 @@ jobs:
           path: |
             dist/*.dmg
           retention-days: 30
+          if-no-files-found: error
 
   # =========================================
   # BUAT GITHUB RELEASE (opsional, saat tag)
@@ -82,7 +104,7 @@ jobs:
     needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    
+
     permissions:
       contents: write
 
@@ -101,19 +123,19 @@ jobs:
           name: "CBT Teladan ${{ github.ref_name }}"
           body: |
             ## CBT Teladan ${{ github.ref_name }}
-            
+
             **Aplikasi Ujian Resmi SMA Negeri 1 Yogyakarta**
-            
+
             ### Download
             - **Windows**: `CBT-Teladan-Setup-x.x.x.exe` — Installer untuk Windows 10/11
             - **macOS**: `CBT-Teladan-x.x.x-mac.dmg` — Installer untuk macOS (Intel & Apple Silicon)
-            
+
             ### Fitur Keamanan
             - Mode Kiosk fullscreen
             - Blokir DevTools, shortcut, clipboard, klik kanan
             - Proteksi dual monitor
             - Identifikasi Electron client (User-Agent & HTTP Header)
-            
+
             ### Cara Install
             1. Download file sesuai OS
             2. Jalankan installer
