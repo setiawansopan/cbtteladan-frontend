@@ -1,0 +1,78 @@
+{
+  "name": "cbt-teladan",
+  "version": "1.0.0",
+  "description": "Aplikasi Ujian Resmi SMA Negeri 1 Yogyakarta",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64",
+    "build:mac": "electron-builder --mac --x64 --arm64",
+    "build:linux": "electron-builder --linux --x64",
+    "build:all": "electron-builder --win --mac --linux",
+    "dist": "electron-builder --win --x64"
+  },
+  "keywords": [
+    "cbt",
+    "exam",
+    "electron"
+  ],
+  "author": "SMA Negeri 1 Yogyakarta",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^40.6.1",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.sman1yogyakarta.cbtteladan",
+    "productName": "CBT Teladan",
+    "copyright": "Copyright © 2026 SMA Negeri 1 Yogyakarta",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "taskbar.js",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "CBT-Teladan-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "shortcutName": "CBT Teladan",
+      "menuCategory": "CBT Teladan",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.education",
+      "artifactName": "CBT-Teladan-${version}-mac.${ext}",
+      "hardenedRuntime": true
+    },
+    "dmg": {
+      "title": "CBT Teladan",
+      "artifactName": "CBT-Teladan-${version}.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Education",
+      "artifactName": "CBT-Teladan-${version}-linux.${ext}"
+    }
+  }
+}
