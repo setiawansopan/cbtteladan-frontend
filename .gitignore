@@ -1,6 +1,5 @@
 node_modules/
 dist/
-build/
 install.log
 *.log
 .DS_Store

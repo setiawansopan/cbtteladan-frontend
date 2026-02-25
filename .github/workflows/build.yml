@@ -1,14 +1,14 @@
 name: Build & Release CBT Teladan
 
-# === KAPAN WORKFLOW INI BERJALAN ===
 on:
-  # Otomatis build saat push tag versi (contoh: v1.0.0, v1.2.3)
   push:
     tags:
       - "v*"
-
-  # Bisa juga trigger manual dari GitHub Actions UI
   workflow_dispatch:
+
+# Permission untuk semua jobs
+permissions:
+  contents: write
 
 jobs:
   # =========================================
@@ -16,6 +16,7 @@ jobs:
   # =========================================
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout kode
@@ -27,35 +28,53 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+        env:
+          ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
 
-      - name: Verify Electron installed
-        run: npx electron --version
+      - name: Debug - check electron
+        run: |
+          echo "Node version:"
+          node --version
+          echo "NPM version:"
+          npm --version
+          echo "Electron binary:"
+          dir node_modules\electron\dist\electron.exe
+        shell: cmd
+
+      - name: Create build resources dir
+        run: mkdir build 2>nul & echo ok
+        shell: cmd
 
       - name: Build Windows installer
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win nsis --x64
+        run: npx electron-builder --win nsis --x64 --publish never
 
       - name: List dist output
         if: always()
-        run: Get-ChildItem dist -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, Length
+        shell: powershell
+        run: |
+          if (Test-Path dist) {
+            Get-ChildItem dist -Recurse | Select-Object FullName, Length
+          } else {
+            Write-Host "dist folder does not exist"
+          }
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: CBT-Teladan-Windows
-          path: |
-            dist/*.exe
+          path: dist/*.exe
           retention-days: 30
-          if-no-files-found: error
 
   # =========================================
   # BUILD macOS (.dmg installer)
   # =========================================
   build-macos:
     runs-on: macos-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout kode
@@ -67,46 +86,45 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+        env:
+          ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
 
-      - name: Verify Electron installed
-        run: npx electron --version
+      - name: Debug - check electron
+        run: |
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "Arch: $(uname -m)"
+          ls -la node_modules/electron/dist/ | head -5
 
-      - name: Build macOS DMG (x64)
+      - name: Create build resources dir
+        run: mkdir -p build
+
+      - name: Build macOS DMG
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          CSC_LINK: ""
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --mac dmg --x64
-
-      - name: Build macOS DMG (arm64)
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --mac dmg --arm64
+        run: npx electron-builder --mac dmg --publish never
 
       - name: List dist output
         if: always()
-        run: ls -laR dist/ || true
+        run: ls -laR dist/ 2>/dev/null || echo "dist folder does not exist"
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: CBT-Teladan-macOS
-          path: |
-            dist/*.dmg
+          path: dist/*.dmg
           retention-days: 30
-          if-no-files-found: error
 
   # =========================================
-  # BUAT GITHUB RELEASE (opsional, saat tag)
+  # BUAT GITHUB RELEASE
   # =========================================
   release:
     needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-
-    permissions:
-      contents: write
 
     steps:
       - name: Download semua artifacts
@@ -115,7 +133,7 @@ jobs:
           path: artifacts
 
       - name: List artifacts
-        run: find artifacts -type f | head -20
+        run: find artifacts -type f
 
       - name: Buat GitHub Release
         uses: softprops/action-gh-release@v2
@@ -127,14 +145,8 @@ jobs:
             **Aplikasi Ujian Resmi SMA Negeri 1 Yogyakarta**
 
             ### Download
-            - **Windows**: `CBT-Teladan-Setup-x.x.x.exe` — Installer untuk Windows 10/11
-            - **macOS**: `CBT-Teladan-x.x.x-mac.dmg` — Installer untuk macOS (Intel & Apple Silicon)
-
-            ### Fitur Keamanan
-            - Mode Kiosk fullscreen
-            - Blokir DevTools, shortcut, clipboard, klik kanan
-            - Proteksi dual monitor
-            - Identifikasi Electron client (User-Agent & HTTP Header)
+            - **Windows**: `CBT-Teladan-Setup-x.x.x.exe`
+            - **macOS**: `CBT-Teladan-x.x.x.dmg`
 
             ### Cara Install
             1. Download file sesuai OS
