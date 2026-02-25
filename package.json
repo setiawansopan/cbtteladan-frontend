@@ -70,12 +70,12 @@
       ],
       "icon": "build/icon.png",
       "category": "public.app-category.education",
-      "artifactName": "CBT-Teladan-${version}-mac.${ext}",
+      "artifactName": "CBT-Teladan-${version}-${arch}.${ext}",
       "hardenedRuntime": true
     },
     "dmg": {
       "title": "CBT Teladan",
-      "artifactName": "CBT-Teladan-${version}.${ext}"
+      "artifactName": "CBT-Teladan-${version}-${arch}.${ext}"
     },
     "linux": {
       "target": [
