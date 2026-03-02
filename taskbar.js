@@ -5,14 +5,14 @@
 // Akses data sistem via window.cbtTaskbar (dari preload.js)
 
 (function () {
-  'use strict';
+  "use strict";
 
   // Cegah inject ganda
-  if (document.getElementById('cbt-taskbar')) return;
+  if (document.getElementById("cbt-taskbar")) return;
 
   // === 1. BUAT ELEMEN TASKBAR ===
-  const taskbar = document.createElement('div');
-  taskbar.id = 'cbt-taskbar';
+  const taskbar = document.createElement("div");
+  taskbar.id = "cbt-taskbar";
 
   taskbar.innerHTML = `
     <div class="cbt-tb-left">
@@ -36,6 +36,10 @@
         <span class="cbt-tb-date" id="cbt-clock-date">--</span>
       </div>
       <div class="cbt-tb-separator"></div>
+      <div class="cbt-tb-item cbt-tb-refresh" id="cbt-refresh-btn" title="Refresh halaman ujian">
+        <span class="cbt-tb-icon">🔄</span>
+        <span>Refresh</span>
+      </div>
       <div class="cbt-tb-item cbt-tb-exit" id="cbt-exit-btn" title="Keluar dari aplikasi">
         <span class="cbt-tb-icon">⏻</span>
         <span>Keluar</span>
@@ -58,7 +62,7 @@
   document.body.appendChild(taskbar);
 
   // === 2. INJECT CSS ===
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.textContent = `
     /* Geser konten halaman agar tidak tertutup taskbar */
     html {
@@ -85,6 +89,13 @@
       user-select: none !important;
       -webkit-user-select: none !important;
       box-shadow: 0 -2px 10px rgba(0,0,0,0.3) !important;
+    }
+
+    /* Saat modal konfirmasi aktif (mis. SweetAlert),
+       taskbar tidak boleh menangkap klik agar tombol modal tetap responsif */
+    body.cbt-modal-active #cbt-taskbar,
+    body.cbt-modal-active #cbt-taskbar * {
+      pointer-events: none !important;
     }
 
     /* Sisi kiri */
@@ -169,6 +180,16 @@
     }
 
     /* Tombol Keluar */
+    .cbt-tb-refresh {
+      cursor: pointer !important;
+      color: #70a1ff !important;
+      border-radius: 6px !important;
+      transition: all 0.15s !important;
+    }
+    .cbt-tb-refresh:hover {
+      background: rgba(112, 161, 255, 0.18) !important;
+      color: #9ec1ff !important;
+    }
     .cbt-tb-exit {
       cursor: pointer !important;
       color: #ff6b6b !important;
@@ -344,34 +365,49 @@
   document.head.appendChild(style);
 
   // === 3. LOGIC JAM & TANGGAL ===
-  const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const HARI = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const BULAN = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "Mei",
+    "Jun",
+    "Jul",
+    "Agu",
+    "Sep",
+    "Okt",
+    "Nov",
+    "Des",
+  ];
 
   function updateClock() {
     const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const mins = String(now.getMinutes()).padStart(2, '0');
-    const secs = String(now.getSeconds()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, "0");
+    const mins = String(now.getMinutes()).padStart(2, "0");
+    const secs = String(now.getSeconds()).padStart(2, "0");
 
     const hari = HARI[now.getDay()];
     const tgl = now.getDate();
     const bulan = BULAN[now.getMonth()];
     const tahun = now.getFullYear();
 
-    document.getElementById('cbt-clock-time').textContent = `${hours}:${mins}:${secs}`;
-    document.getElementById('cbt-clock-date').textContent = `${hari}, ${tgl} ${bulan} ${tahun}`;
+    document.getElementById("cbt-clock-time").textContent =
+      `${hours}:${mins}:${secs}`;
+    document.getElementById("cbt-clock-date").textContent =
+      `${hari}, ${tgl} ${bulan} ${tahun}`;
   }
   updateClock();
   setInterval(updateClock, 1000);
 
   // === 4. LOGIC WIFI ===
-  const wifiBtn = document.getElementById('cbt-wifi-btn');
-  const wifiPanel = document.getElementById('cbt-wifi-panel');
-  const wifiList = document.getElementById('cbt-wifi-list');
-  const wifiClose = document.getElementById('cbt-wifi-close');
-  const wifiRefresh = document.getElementById('cbt-wifi-refresh');
-  const wifiNameEl = document.getElementById('cbt-wifi-name');
-  const wifiIconEl = document.getElementById('cbt-wifi-icon');
+  const wifiBtn = document.getElementById("cbt-wifi-btn");
+  const wifiPanel = document.getElementById("cbt-wifi-panel");
+  const wifiList = document.getElementById("cbt-wifi-list");
+  const wifiClose = document.getElementById("cbt-wifi-close");
+  const wifiRefresh = document.getElementById("cbt-wifi-refresh");
+  const wifiNameEl = document.getElementById("cbt-wifi-name");
+  const wifiIconEl = document.getElementById("cbt-wifi-icon");
 
   // Update info WiFi saat ini
   async function updateWifiInfo() {
@@ -379,72 +415,75 @@
       if (!window.cbtTaskbar) return;
       const info = await window.cbtTaskbar.getWifiInfo();
       if (info && info.connected) {
-        wifiNameEl.textContent = info.ssid || 'Terhubung';
+        wifiNameEl.textContent = info.ssid || "Terhubung";
         wifiIconEl.textContent = getSignalIcon(info.signal || 100);
       } else {
-        wifiNameEl.textContent = 'Tidak terhubung';
-        wifiIconEl.textContent = '📡';
+        wifiNameEl.textContent = "Tidak terhubung";
+        wifiIconEl.textContent = "📡";
       }
     } catch (err) {
-      wifiNameEl.textContent = 'WiFi';
-      wifiIconEl.textContent = '📶';
+      wifiNameEl.textContent = "WiFi";
+      wifiIconEl.textContent = "📶";
     }
   }
 
   // Dapatkan ikon signal berdasarkan kekuatan
   function getSignalIcon(signal) {
-    if (signal >= 75) return '📶';
-    if (signal >= 50) return '📶';
-    if (signal >= 25) return '📡';
-    return '📡';
+    if (signal >= 75) return "📶";
+    if (signal >= 50) return "📶";
+    if (signal >= 25) return "📡";
+    return "📡";
   }
 
   // Muat daftar jaringan WiFi
   async function loadWifiNetworks() {
-    wifiList.innerHTML = '<div class="cbt-wifi-loading">⏳ Memindai jaringan...</div>';
+    wifiList.innerHTML =
+      '<div class="cbt-wifi-loading">⏳ Memindai jaringan...</div>';
     try {
       if (!window.cbtTaskbar) return;
       const networks = await window.cbtTaskbar.getWifiNetworks();
       if (!networks || networks.length === 0) {
-        wifiList.innerHTML = '<div class="cbt-wifi-loading">Tidak ada jaringan ditemukan</div>';
+        wifiList.innerHTML =
+          '<div class="cbt-wifi-loading">Tidak ada jaringan ditemukan</div>';
         return;
       }
 
-      wifiList.innerHTML = '';
+      wifiList.innerHTML = "";
       networks.forEach((net) => {
-        const item = document.createElement('div');
-        item.className = 'cbt-wifi-item' + (net.connected ? ' connected' : '');
+        const item = document.createElement("div");
+        item.className = "cbt-wifi-item" + (net.connected ? " connected" : "");
         item.innerHTML = `
           <div class="cbt-wifi-item-left">
             <span class="cbt-wifi-item-signal">${getSignalIcon(net.signal)}</span>
             <div>
               <div class="cbt-wifi-item-name">${escapeHtml(net.ssid)}</div>
-              ${net.connected ? '<div class="cbt-wifi-item-status">✓ Terhubung</div>' : ''}
+              ${net.connected ? '<div class="cbt-wifi-item-status">✓ Terhubung</div>' : ""}
             </div>
           </div>
-          ${net.secured ? '<span style="font-size:12px;color:#8892b0">🔒</span>' : ''}
+          ${net.secured ? '<span style="font-size:12px;color:#8892b0">🔒</span>' : ""}
         `;
 
         if (!net.connected) {
-          item.addEventListener('click', () => promptWifiPassword(net.ssid));
+          item.addEventListener("click", () => promptWifiPassword(net.ssid));
         }
 
         wifiList.appendChild(item);
       });
     } catch (err) {
-      wifiList.innerHTML = '<div class="cbt-wifi-loading">Gagal memindai jaringan</div>';
+      wifiList.innerHTML =
+        '<div class="cbt-wifi-loading">Gagal memindai jaringan</div>';
     }
   }
 
   // Tampilkan dialog password WiFi
   function promptWifiPassword(ssid) {
     // Hapus dialog lama jika ada
-    const oldDialog = document.getElementById('cbt-wifi-pwd-dialog');
+    const oldDialog = document.getElementById("cbt-wifi-pwd-dialog");
     if (oldDialog) oldDialog.remove();
 
-    const dialog = document.createElement('div');
-    dialog.id = 'cbt-wifi-pwd-dialog';
-    dialog.className = 'cbt-wifi-password-dialog';
+    const dialog = document.createElement("div");
+    dialog.id = "cbt-wifi-pwd-dialog";
+    dialog.className = "cbt-wifi-password-dialog";
     dialog.innerHTML = `
       <div style="font-size:12px;color:#8892b0;margin-bottom:6px;">Sambungkan ke <strong style="color:#fff">${escapeHtml(ssid)}</strong></div>
       <input type="password" id="cbt-wifi-pwd-input" placeholder="Masukkan kata sandi..." autocomplete="off" />
@@ -455,73 +494,81 @@
     `;
     wifiPanel.appendChild(dialog);
 
-    const pwdInput = document.getElementById('cbt-wifi-pwd-input');
+    const pwdInput = document.getElementById("cbt-wifi-pwd-input");
     pwdInput.focus();
 
-    document.getElementById('cbt-wifi-pwd-cancel').addEventListener('click', () => dialog.remove());
-    document.getElementById('cbt-wifi-pwd-connect').addEventListener('click', async () => {
-      const password = pwdInput.value;
-      dialog.innerHTML = '<div class="cbt-wifi-loading">⏳ Menyambungkan...</div>';
-      try {
-        const result = await window.cbtTaskbar.connectWifi(ssid, password);
-        if (result && result.success) {
-          dialog.innerHTML = '<div class="cbt-wifi-loading" style="color:#2ed573">✓ Berhasil terhubung!</div>';
-          setTimeout(() => {
-            dialog.remove();
-            loadWifiNetworks();
-            updateWifiInfo();
-          }, 1500);
-        } else {
-          dialog.innerHTML = `<div class="cbt-wifi-loading" style="color:#ff6b6b">✗ Gagal: ${escapeHtml(result?.error || 'Tidak diketahui')}</div>`;
+    document
+      .getElementById("cbt-wifi-pwd-cancel")
+      .addEventListener("click", () => dialog.remove());
+    document
+      .getElementById("cbt-wifi-pwd-connect")
+      .addEventListener("click", async () => {
+        const password = pwdInput.value;
+        dialog.innerHTML =
+          '<div class="cbt-wifi-loading">⏳ Menyambungkan...</div>';
+        try {
+          const result = await window.cbtTaskbar.connectWifi(ssid, password);
+          if (result && result.success) {
+            dialog.innerHTML =
+              '<div class="cbt-wifi-loading" style="color:#2ed573">✓ Berhasil terhubung!</div>';
+            setTimeout(() => {
+              dialog.remove();
+              loadWifiNetworks();
+              updateWifiInfo();
+            }, 1500);
+          } else {
+            dialog.innerHTML = `<div class="cbt-wifi-loading" style="color:#ff6b6b">✗ Gagal: ${escapeHtml(result?.error || "Tidak diketahui")}</div>`;
+            setTimeout(() => dialog.remove(), 2500);
+          }
+        } catch (err) {
+          dialog.innerHTML =
+            '<div class="cbt-wifi-loading" style="color:#ff6b6b">✗ Gagal menyambungkan</div>';
           setTimeout(() => dialog.remove(), 2500);
         }
-      } catch (err) {
-        dialog.innerHTML = '<div class="cbt-wifi-loading" style="color:#ff6b6b">✗ Gagal menyambungkan</div>';
-        setTimeout(() => dialog.remove(), 2500);
-      }
-    });
+      });
 
     // Enter key untuk connect
-    pwdInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') document.getElementById('cbt-wifi-pwd-connect')?.click();
-      if (e.key === 'Escape') dialog.remove();
+    pwdInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter")
+        document.getElementById("cbt-wifi-pwd-connect")?.click();
+      if (e.key === "Escape") dialog.remove();
       e.stopPropagation(); // Agar tidak terblokir oleh anti-cheat
     });
   }
 
   // Toggle panel WiFi
-  wifiBtn.addEventListener('click', (e) => {
+  wifiBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    const isOpen = wifiPanel.classList.contains('open');
+    const isOpen = wifiPanel.classList.contains("open");
     if (isOpen) {
-      wifiPanel.classList.remove('open');
+      wifiPanel.classList.remove("open");
     } else {
-      wifiPanel.classList.add('open');
+      wifiPanel.classList.add("open");
       loadWifiNetworks();
     }
   });
 
-  wifiClose.addEventListener('click', () => wifiPanel.classList.remove('open'));
-  wifiRefresh.addEventListener('click', loadWifiNetworks);
+  wifiClose.addEventListener("click", () => wifiPanel.classList.remove("open"));
+  wifiRefresh.addEventListener("click", loadWifiNetworks);
 
   // Tutup panel jika klik di luar
-  document.addEventListener('click', (e) => {
+  document.addEventListener("click", (e) => {
     if (!wifiPanel.contains(e.target) && !wifiBtn.contains(e.target)) {
-      wifiPanel.classList.remove('open');
+      wifiPanel.classList.remove("open");
     }
   });
 
   // === 5. LOGIC BATERAI ===
-  const batteryTextEl = document.getElementById('cbt-battery-text');
-  const batteryIconEl = document.getElementById('cbt-battery-icon');
-  const batteryInfoEl = document.getElementById('cbt-battery-info');
+  const batteryTextEl = document.getElementById("cbt-battery-text");
+  const batteryIconEl = document.getElementById("cbt-battery-icon");
+  const batteryInfoEl = document.getElementById("cbt-battery-info");
 
   function getBatteryIcon(percent, charging) {
-    if (charging) return '🔌';
-    if (percent >= 80) return '🔋';
-    if (percent >= 50) return '🔋';
-    if (percent >= 20) return '🪫';
-    return '🪫';
+    if (charging) return "🔌";
+    if (percent >= 80) return "🔋";
+    if (percent >= 50) return "🔋";
+    if (percent >= 20) return "🪫";
+    return "🪫";
   }
 
   async function updateBatteryInfo() {
@@ -531,43 +578,76 @@
       if (info && info.hasBattery) {
         batteryIconEl.textContent = getBatteryIcon(info.percent, info.charging);
         batteryTextEl.textContent = `${info.percent}%`;
-        batteryInfoEl.title = `Baterai: ${info.percent}%${info.charging ? ' (Mengisi)' : ''}`;
+        batteryInfoEl.title = `Baterai: ${info.percent}%${info.charging ? " (Mengisi)" : ""}`;
 
         // Warning jika baterai rendah
         if (info.percent <= 15 && !info.charging) {
-          batteryTextEl.classList.add('cbt-battery-low');
+          batteryTextEl.classList.add("cbt-battery-low");
           batteryInfoEl.title = `⚠️ Baterai Rendah: ${info.percent}%! Segera hubungkan charger.`;
         } else {
-          batteryTextEl.classList.remove('cbt-battery-low');
+          batteryTextEl.classList.remove("cbt-battery-low");
         }
       } else {
         // Desktop / tidak ada baterai
-        batteryIconEl.textContent = '🔌';
-        batteryTextEl.textContent = 'AC';
-        batteryInfoEl.title = 'Daya listrik (tanpa baterai)';
+        batteryIconEl.textContent = "🔌";
+        batteryTextEl.textContent = "AC";
+        batteryInfoEl.title = "Daya listrik (tanpa baterai)";
       }
     } catch (err) {
-      batteryIconEl.textContent = '🔋';
-      batteryTextEl.textContent = '--';
+      batteryIconEl.textContent = "🔋";
+      batteryTextEl.textContent = "--";
     }
   }
 
   // === 6. HELPER ===
   function escapeHtml(str) {
-    const div = document.createElement('div');
+    const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
   }
 
-  // === 7. TOMBOL KELUAR ===
-  const exitBtn = document.getElementById('cbt-exit-btn');
-  exitBtn.addEventListener('click', async () => {
+  // === 7. KOMPATIBILITAS MODAL KONFIRMASI (SweetAlert) ===
+  function isConfirmationModalOpen() {
+    return !!document.querySelector(
+      ".swal2-container.swal2-shown, .swal2-container.swal2-backdrop-show, .swal-overlay, .swal-modal, .sweet-alert",
+    );
+  }
+
+  function syncModalState() {
+    const modalOpen = isConfirmationModalOpen();
+    document.body.classList.toggle("cbt-modal-active", modalOpen);
+    if (modalOpen) {
+      wifiPanel.classList.remove("open");
+    }
+  }
+
+  const modalObserver = new MutationObserver(syncModalState);
+  modalObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["class", "style"],
+  });
+  syncModalState();
+
+  // === 8. TOMBOL KELUAR ===
+  const refreshBtn = document.getElementById("cbt-refresh-btn");
+  refreshBtn.addEventListener("click", async () => {
+    if (window.cbtTaskbar && window.cbtTaskbar.requestRefresh) {
+      window.cbtTaskbar.requestRefresh();
+    } else {
+      window.location.reload();
+    }
+  });
+
+  const exitBtn = document.getElementById("cbt-exit-btn");
+  exitBtn.addEventListener("click", async () => {
     if (window.cbtTaskbar && window.cbtTaskbar.requestExit) {
       window.cbtTaskbar.requestExit();
     }
   });
 
-  // === 8. MULAI UPDATE PERIODIK ===
+  // === 9. MULAI UPDATE PERIODIK ===
   updateWifiInfo();
   updateBatteryInfo();
 
@@ -576,5 +656,4 @@
 
   // Update baterai setiap 30 detik
   setInterval(updateBatteryInfo, 30000);
-
 })();
