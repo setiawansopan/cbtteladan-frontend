@@ -92,10 +92,24 @@
     }
 
     /* Saat modal konfirmasi aktif (mis. SweetAlert),
-       taskbar tidak boleh menangkap klik agar tombol modal tetap responsif */
-    body.cbt-modal-active #cbt-taskbar,
+       taskbar tidak boleh menangkap klik agar tombol modal tetap responsif.
+       z-index juga diturunkan ke 0 agar SweetAlert tampil di atasnya. */
+    body.cbt-modal-active #cbt-taskbar {
+      pointer-events: none !important;
+      z-index: 0 !important;
+    }
     body.cbt-modal-active #cbt-taskbar * {
       pointer-events: none !important;
+    }
+
+    /* Pastikan container SweetAlert selalu muncul di atas taskbar */
+    .swal2-container,
+    .swal2-backdrop-show,
+    .swal2-shown,
+    .swal-overlay,
+    .sweet-overlay,
+    .sweet-alert {
+      z-index: 2147483646 !important;
     }
 
     /* Sisi kiri */
@@ -361,6 +375,97 @@
       background: #333 !important;
       border-radius: 3px !important;
     }
+
+    /* === MODAL KONFIRMASI KELUAR === */
+    #cbt-exit-modal {
+      display: none;
+      position: fixed !important;
+      inset: 0 !important;
+      background: rgba(0,0,0,0.78) !important;
+      z-index: 2147483645 !important;
+      align-items: center !important;
+      justify-content: center !important;
+      backdrop-filter: blur(6px) !important;
+      -webkit-backdrop-filter: blur(6px) !important;
+    }
+    #cbt-exit-modal.open {
+      display: flex !important;
+    }
+    .cbt-exit-modal-card {
+      background: #1a1a2e !important;
+      border: 1px solid #ef4444 !important;
+      border-radius: 16px !important;
+      padding: 36px 32px 28px !important;
+      max-width: 380px !important;
+      width: 88% !important;
+      text-align: center !important;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.85), 0 0 40px rgba(239,68,68,0.18) !important;
+      animation: cbt-exit-in 0.2s cubic-bezier(.34,1.56,.64,1) both !important;
+      font-family: 'Segoe UI', -apple-system, sans-serif !important;
+    }
+    @keyframes cbt-exit-in {
+      from { transform: scale(0.82); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    .cbt-exit-modal-icon {
+      font-size: 52px !important;
+      margin-bottom: 14px !important;
+      display: block !important;
+      filter: drop-shadow(0 0 12px rgba(239,68,68,0.5)) !important;
+    }
+    .cbt-exit-modal-title {
+      font-size: 20px !important;
+      font-weight: 700 !important;
+      color: #fff !important;
+      margin: 0 0 10px !important;
+    }
+    .cbt-exit-modal-msg {
+      font-size: 14px !important;
+      color: #8892b0 !important;
+      margin: 0 0 26px !important;
+      line-height: 1.6 !important;
+    }
+    .cbt-exit-modal-btns {
+      display: flex !important;
+      gap: 10px !important;
+      justify-content: center !important;
+    }
+    .cbt-exit-btn-cancel {
+      padding: 10px 26px !important;
+      border-radius: 8px !important;
+      border: 1px solid #374151 !important;
+      background: #1f2937 !important;
+      color: #d1d5db !important;
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      cursor: pointer !important;
+      transition: all 0.15s !important;
+      font-family: inherit !important;
+    }
+    .cbt-exit-btn-cancel:hover {
+      background: #374151 !important;
+      color: #fff !important;
+    }
+    .cbt-exit-btn-confirm {
+      padding: 10px 26px !important;
+      border-radius: 8px !important;
+      border: none !important;
+      background: #ef4444 !important;
+      color: #fff !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.15s !important;
+      font-family: inherit !important;
+    }
+    .cbt-exit-btn-confirm:hover:not(:disabled) {
+      background: #dc2626 !important;
+      box-shadow: 0 4px 14px rgba(239,68,68,0.45) !important;
+    }
+    .cbt-exit-btn-confirm:disabled {
+      background: #6b7280 !important;
+      cursor: not-allowed !important;
+    }
   `;
   document.head.appendChild(style);
 
@@ -613,12 +718,22 @@
     );
   }
 
+  // Gunakan flag + requestAnimationFrame untuk mencegah infinite loop:
+  // MutationObserver mengamati perubahan class di body (subtree),
+  // dan syncModalState() sendiri mengubah class body → memicu observer lagi.
+  // Tanpa debounce, ini menjadi loop tak terbatas dan menyebabkan app hang.
+  let _syncModalScheduled = false;
   function syncModalState() {
-    const modalOpen = isConfirmationModalOpen();
-    document.body.classList.toggle("cbt-modal-active", modalOpen);
-    if (modalOpen) {
-      wifiPanel.classList.remove("open");
-    }
+    if (_syncModalScheduled) return;
+    _syncModalScheduled = true;
+    requestAnimationFrame(() => {
+      _syncModalScheduled = false;
+      const modalOpen = isConfirmationModalOpen();
+      document.body.classList.toggle("cbt-modal-active", modalOpen);
+      if (modalOpen) {
+        wifiPanel.classList.remove("open");
+      }
+    });
   }
 
   const modalObserver = new MutationObserver(syncModalState);
@@ -630,7 +745,86 @@
   });
   syncModalState();
 
-  // === 8. TOMBOL KELUAR ===
+  // === 8. MODAL KONFIRMASI KELUAR ===
+
+  // Buat elemen modal sekali lalu simpan referensinya
+  const exitModal = document.createElement("div");
+  exitModal.id = "cbt-exit-modal";
+  exitModal.innerHTML = `
+    <div class="cbt-exit-modal-card">
+      <span class="cbt-exit-modal-icon">⏻</span>
+      <h2 class="cbt-exit-modal-title">Keluar Aplikasi?</h2>
+      <p class="cbt-exit-modal-msg">Apakah Anda yakin ingin keluar<br>dari aplikasi ujian CBT Teladan?</p>
+      <div class="cbt-exit-modal-btns">
+        <button id="cbt-exit-cancel-btn" class="cbt-exit-btn-cancel">Batal</button>
+        <button id="cbt-exit-confirm-btn" class="cbt-exit-btn-confirm">Ya, Keluar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(exitModal);
+
+  const exitCancelBtn = document.getElementById("cbt-exit-cancel-btn");
+  const exitConfirmBtn = document.getElementById("cbt-exit-confirm-btn");
+
+  function openExitModal() {
+    exitModal.classList.add("open");
+    // reset tombol kalau sebelumnya sudah diklik
+    exitConfirmBtn.disabled = false;
+    exitConfirmBtn.textContent = "Ya, Keluar";
+    exitConfirmBtn.focus();
+  }
+
+  function closeExitModal() {
+    exitModal.classList.remove("open");
+  }
+
+  exitCancelBtn.addEventListener("click", closeExitModal);
+
+  // Klik backdrop tutup modal
+  exitModal.addEventListener("click", (e) => {
+    if (e.target === exitModal) closeExitModal();
+  });
+
+  exitConfirmBtn.addEventListener("click", async () => {
+    exitConfirmBtn.disabled = true;
+    exitConfirmBtn.textContent = "Keluar...";
+    if (window.cbtTaskbar && window.cbtTaskbar.requestExit) {
+      await window.cbtTaskbar.requestExit();
+    }
+  });
+
+  // Fungsi utama: coba Swal dulu, fallback ke modal kustom
+  function showExitConfirm() {
+    if (typeof Swal !== "undefined") {
+      Swal.fire({
+        title: "Keluar Aplikasi?",
+        html: "Apakah Anda yakin ingin keluar<br>dari aplikasi ujian CBT Teladan?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#374151",
+        confirmButtonText: "Ya, Keluar",
+        cancelButtonText: "Batal",
+        reverseButtons: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        focusConfirm: false,
+        focusCancel: true,
+      }).then((result) => {
+        if (
+          result.isConfirmed &&
+          window.cbtTaskbar &&
+          window.cbtTaskbar.requestExit
+        ) {
+          window.cbtTaskbar.requestExit();
+        }
+      });
+    } else {
+      openExitModal();
+    }
+  }
+
+  // === 8b. TOMBOL REFRESH & KELUAR ===
   const refreshBtn = document.getElementById("cbt-refresh-btn");
   refreshBtn.addEventListener("click", async () => {
     if (window.cbtTaskbar && window.cbtTaskbar.requestRefresh) {
@@ -641,10 +835,9 @@
   });
 
   const exitBtn = document.getElementById("cbt-exit-btn");
-  exitBtn.addEventListener("click", async () => {
-    if (window.cbtTaskbar && window.cbtTaskbar.requestExit) {
-      window.cbtTaskbar.requestExit();
-    }
+  exitBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    showExitConfirm();
   });
 
   // === 9. MULAI UPDATE PERIODIK ===

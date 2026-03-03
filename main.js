@@ -219,11 +219,26 @@ function createWindow() {
     webContents.closeDevTools();
   });
 
-  // --- 2. CEGAH PEMBUKAAN WINDOW/TAB BARU ---
-  // Jika ada link target="_blank" atau window.open(), paksa buka di window yang sama
+  // --- 2. KONTROL PEMBUKAAN WINDOW/TAB BARU ---
+  // Izinkan popup internal (same-origin) agar flow konfirmasi/ujian tetap berjalan.
+  // Tolak popup ke domain luar demi keamanan.
   webContents.setWindowOpenHandler(({ url }) => {
-    // Muat URL di window yang sama, bukan buka window baru
-    mainWindow.loadURL(url);
+    const allowedHost = new URL(EXAM_URL).hostname;
+
+    // Beberapa library membuka popup lewat about:blank sebelum isi script dijalankan.
+    if (url === "about:blank") {
+      return { action: "allow" };
+    }
+
+    try {
+      const targetHost = new URL(url).hostname;
+      if (targetHost === allowedHost) {
+        return { action: "allow" };
+      }
+    } catch {
+      // URL tidak valid / non-HTTP(S), fallback ke deny.
+    }
+
     return { action: "deny" };
   });
 
@@ -778,21 +793,11 @@ ipcMain.handle("get-battery-info", async () => {
 });
 
 // --- IPC: REQUEST EXIT (tombol keluar di taskbar) ---
+// Konfirmasi sudah ditangani di sisi renderer (SweetAlert / custom modal),
+// IPC ini hanya dipanggil setelah user mengkonfirmasi → langsung quit.
 ipcMain.handle("request-exit", async () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  const result = await dialog.showMessageBox(mainWindow, {
-    type: "question",
-    buttons: ["Batal", "Ya, Keluar"],
-    defaultId: 0,
-    cancelId: 0,
-    title: "Konfirmasi Keluar",
-    message: "Apakah Anda yakin ingin keluar dari aplikasi ujian?",
-    noLink: true,
-  });
-  if (result.response === 1) {
-    globalShortcut.unregisterAll();
-    app.quit();
-  }
+  globalShortcut.unregisterAll();
+  app.quit();
 });
 
 // --- IPC: REQUEST REFRESH (tombol refresh di taskbar) ---
