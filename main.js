@@ -160,6 +160,7 @@ function createWindow() {
     kiosk: true,                    // Layar penuh tanpa taskbar
     alwaysOnTop: true,              // Selalu di atas aplikasi lain
     fullscreen: true,               // Fullscreen sebagai fallback
+    skipTaskbar: true,              // Sembunyikan dari taskbar Windows
 
     // === SEMBUNYIKAN ELEMEN UI ===
     autoHideMenuBar: true,          // Sembunyikan menu bar
@@ -250,25 +251,11 @@ function createWindow() {
     }
 
     if (ctrl && !shift && !alt && key === 'b' && exitSequenceStep === 1) {
-      // Langkah 2: Ctrl+B ditekan setelah Ctrl+C — tampilkan konfirmasi lalu keluar
+      // Langkah 2: Ctrl+B ditekan setelah Ctrl+C — langsung keluar tanpa konfirmasi
       exitSequenceStep = 0;
       clearTimeout(exitSequenceTimer);
-      dialog.showMessageBox(mainWindow, {
-        type: 'question',
-        buttons: ['Batal', 'Ya, Keluar'],
-        defaultId: 0,
-        cancelId: 0,
-        title: 'Konfirmasi Keluar',
-        message: 'Apakah Anda yakin ingin keluar dari aplikasi ujian?',
-        noLink: true,
-      }).then((result) => {
-        if (result.response === 1) {
-          // Lepas semua pembatasan sebelum keluar
-          globalShortcut.unregisterAll();
-          app.quit();
-        }
-      });
-      event.preventDefault();
+      globalShortcut.unregisterAll();
+      app.quit();
       return;
     }
 
@@ -396,16 +383,24 @@ function createWindow() {
   });
 
   // --- 5. PAKSA WINDOW TETAP FOKUS & KIOSK ---
-  // Jika window kehilangan fokus, kembalikan fokus
+  // Set alwaysOnTop dengan level tertinggi ('screen-saver')
+  mainWindow.setAlwaysOnTop(true, 'screen-saver');
+
+  // Jika window kehilangan fokus, LANGSUNG kembalikan fokus (tanpa delay)
   mainWindow.on('blur', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
+      // Langsung rebut fokus kembali
+      mainWindow.focus();
+      mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      mainWindow.setKiosk(true);
+      // Backup: coba lagi setelah 50ms untuk kasus Alt+Tab
       setTimeout(() => {
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.focus();
           mainWindow.setAlwaysOnTop(true, 'screen-saver');
           mainWindow.setKiosk(true);
         }
-      }, 100);
+      }, 50);
     }
   });
 
@@ -423,6 +418,19 @@ function createWindow() {
       mainWindow.setKiosk(true);
     }
   });
+
+  // --- 5b. PERIODIC FOCUS ENFORCER ---
+  // Setiap 300ms, pastikan window tetap di atas dan fokus
+  setInterval(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      // Jika window tidak fokus, paksa fokus kembali
+      if (!mainWindow.isFocused()) {
+        mainWindow.focus();
+        mainWindow.setKiosk(true);
+      }
+    }
+  }, 300);
 
   // --- 6. NONAKTIFKAN KLIK KANAN (CONTEXT MENU) ---
   webContents.on('context-menu', (event) => {
@@ -680,21 +688,15 @@ ipcMain.handle('get-battery-info', async () => {
 });
 
 // --- IPC: REQUEST EXIT (tombol keluar di taskbar) ---
+// Konfirmasi ditangani oleh SweetAlert di renderer, handler ini hanya return true
 ipcMain.handle('request-exit', async () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  const result = await dialog.showMessageBox(mainWindow, {
-    type: 'question',
-    buttons: ['Batal', 'Ya, Keluar'],
-    defaultId: 0,
-    cancelId: 0,
-    title: 'Konfirmasi Keluar',
-    message: 'Apakah Anda yakin ingin keluar dari aplikasi ujian?',
-    noLink: true,
-  });
-  if (result.response === 1) {
-    globalShortcut.unregisterAll();
-    app.quit();
-  }
+  return true;
+});
+
+// --- IPC: CONFIRM EXIT (dipanggil setelah user konfirmasi via SweetAlert) ---
+ipcMain.handle('confirm-exit', async () => {
+  globalShortcut.unregisterAll();
+  app.quit();
 });
 
 // === APP LIFECYCLE ===

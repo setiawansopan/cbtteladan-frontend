@@ -559,11 +559,34 @@
     return div.innerHTML;
   }
 
-  // === 7. TOMBOL KELUAR ===
+  // === 7. TOMBOL KELUAR (SweetAlert) ===
   const exitBtn = document.getElementById('cbt-exit-btn');
   exitBtn.addEventListener('click', async () => {
-    if (window.cbtTaskbar && window.cbtTaskbar.requestExit) {
-      window.cbtTaskbar.requestExit();
+    if (!window.cbtTaskbar) return;
+
+    // Cek apakah SweetAlert (Swal) tersedia di halaman web
+    if (typeof Swal !== 'undefined') {
+      const result = await Swal.fire({
+        title: 'Konfirmasi Keluar',
+        text: 'Apakah Anda yakin ingin keluar dari aplikasi ujian?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Keluar',
+        cancelButtonText: 'Batal',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+      if (result.isConfirmed && window.cbtTaskbar.confirmExit) {
+        window.cbtTaskbar.confirmExit();
+      }
+    } else {
+      // Fallback: jika SweetAlert tidak ada, gunakan confirm bawaan browser
+      const confirmed = confirm('Apakah Anda yakin ingin keluar dari aplikasi ujian?');
+      if (confirmed && window.cbtTaskbar.confirmExit) {
+        window.cbtTaskbar.confirmExit();
+      }
     }
   });
 
