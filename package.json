@@ -1,11 +1,12 @@
 {
   "name": "cbt-teladan",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Aplikasi Ujian Resmi SMA Negeri 1 Yogyakarta",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build:win": "electron-builder --win --x64",
+    "build:win:portable": "electron-builder --win portable --x64",
     "build:mac": "electron-builder --mac --x64 --arm64",
     "build:linux": "electron-builder --linux --x64",
     "build:all": "electron-builder --win --mac --linux",
@@ -39,6 +40,7 @@
     ],
     "win": {
       "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
       "target": [
         {
           "target": "nsis",

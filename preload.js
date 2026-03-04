@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require("electron");
 
 // === BLOKIR KEYBOARD BERBAHAYA DI LEVEL DOM ===
 // Ini sebagai lapisan pertahanan tambahan di renderer process.
@@ -69,22 +69,31 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // === BRIDGE AMAN: Expose API ke renderer tanpa akses Node.js langsung ===
 // Semua fungsi di sini bisa dipanggil dari halaman web via window.cbtTaskbar
-contextBridge.exposeInMainWorld('cbtTaskbar', {
+contextBridge.exposeInMainWorld("cbtTaskbar", {
   // Ambil info WiFi saat ini (nama jaringan, signal strength)
-  getWifiInfo: () => ipcRenderer.invoke('get-wifi-info'),
+  getWifiInfo: () => ipcRenderer.invoke("get-wifi-info"),
 
   // Ambil daftar jaringan WiFi yang tersedia
-  getWifiNetworks: () => ipcRenderer.invoke('get-wifi-networks'),
+  getWifiNetworks: () => ipcRenderer.invoke("get-wifi-networks"),
 
   // Sambungkan ke jaringan WiFi tertentu
-  connectWifi: (ssid, password) => ipcRenderer.invoke('connect-wifi', ssid, password),
+  connectWifi: (ssid, password) =>
+    ipcRenderer.invoke("connect-wifi", ssid, password),
 
   // Ambil info baterai (persentase, status charging)
-  getBatteryInfo: () => ipcRenderer.invoke('get-battery-info'),
+  getBatteryInfo: () => ipcRenderer.invoke("get-battery-info"),
 
+  // Request refresh halaman ujian
+  requestRefresh: () => ipcRenderer.invoke("request-refresh"),
+
+<<<<<<< HEAD
   // Request keluar (hanya sinyal, konfirmasi via SweetAlert di renderer)
   requestExit: () => ipcRenderer.invoke('request-exit'),
 
   // Konfirmasi keluar (dipanggil setelah user klik 'Ya' di SweetAlert)
   confirmExit: () => ipcRenderer.invoke('confirm-exit'),
+=======
+  // Request keluar dari aplikasi (akan tampilkan dialog konfirmasi)
+  requestExit: () => ipcRenderer.invoke("request-exit"),
+>>>>>>> e49e555fb7b17c4da25ab4168166cd19c7c502aa
 });
