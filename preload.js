@@ -86,14 +86,6 @@ contextBridge.exposeInMainWorld("cbtTaskbar", {
   // Request refresh halaman ujian
   requestRefresh: () => ipcRenderer.invoke("request-refresh"),
 
-<<<<<<< HEAD
-  // Request keluar (hanya sinyal, konfirmasi via SweetAlert di renderer)
-  requestExit: () => ipcRenderer.invoke('request-exit'),
-
-  // Konfirmasi keluar (dipanggil setelah user klik 'Ya' di SweetAlert)
-  confirmExit: () => ipcRenderer.invoke('confirm-exit'),
-=======
-  // Request keluar dari aplikasi (akan tampilkan dialog konfirmasi)
+  // Request keluar dari aplikasi (konfirmasi via SweetAlert di renderer, lalu panggil ini)
   requestExit: () => ipcRenderer.invoke("request-exit"),
->>>>>>> e49e555fb7b17c4da25ab4168166cd19c7c502aa
 });

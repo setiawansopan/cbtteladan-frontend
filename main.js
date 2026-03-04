@@ -20,7 +20,7 @@ const EXAM_URL = "https://cbtteladan.online";
 //   2. HTTP Header "X-CBT-Client: CBTTeladan"
 //   3. HTTP Header "X-CBT-Version: 1.0"
 const CBT_CLIENT_ID = "CBTTeladan";
-const CBT_CLIENT_VERSION = "1.0";
+const CBT_CLIENT_VERSION = "2.0";
 
 // Daftar keyboard shortcut yang harus diblokir
 const BLOCKED_SHORTCUTS = [
@@ -168,16 +168,10 @@ let exitSequenceTimer = null; // Timer untuk reset jika terlalu lama
 function createWindow() {
   mainWindow = new BrowserWindow({
     // === MODE KIOSK & ALWAYS ON TOP ===
-<<<<<<< HEAD
-    kiosk: true,                    // Layar penuh tanpa taskbar
-    alwaysOnTop: true,              // Selalu di atas aplikasi lain
-    fullscreen: true,               // Fullscreen sebagai fallback
-    skipTaskbar: true,              // Sembunyikan dari taskbar Windows
-=======
     kiosk: true, // Layar penuh tanpa taskbar
     alwaysOnTop: true, // Selalu di atas aplikasi lain
     fullscreen: true, // Fullscreen sebagai fallback
->>>>>>> e49e555fb7b17c4da25ab4168166cd19c7c502aa
+    skipTaskbar: true, // Sembunyikan dari taskbar Windows
 
     // === SEMBUNYIKAN ELEMEN UI ===
     autoHideMenuBar: true, // Sembunyikan menu bar
@@ -294,37 +288,12 @@ function createWindow() {
       return;
     }
 
-<<<<<<< HEAD
-    if (ctrl && !shift && !alt && key === 'b' && exitSequenceStep === 1) {
+    if (ctrl && !shift && !alt && key === "b" && exitSequenceStep === 1) {
       // Langkah 2: Ctrl+B ditekan setelah Ctrl+C — langsung keluar tanpa konfirmasi
       exitSequenceStep = 0;
       clearTimeout(exitSequenceTimer);
       globalShortcut.unregisterAll();
       app.quit();
-=======
-    if (ctrl && !shift && !alt && key === "b" && exitSequenceStep === 1) {
-      // Langkah 2: Ctrl+B ditekan setelah Ctrl+C — tampilkan konfirmasi lalu keluar
-      exitSequenceStep = 0;
-      clearTimeout(exitSequenceTimer);
-      dialog
-        .showMessageBox(mainWindow, {
-          type: "question",
-          buttons: ["Batal", "Ya, Keluar"],
-          defaultId: 0,
-          cancelId: 0,
-          title: "Konfirmasi Keluar",
-          message: "Apakah Anda yakin ingin keluar dari aplikasi ujian?",
-          noLink: true,
-        })
-        .then((result) => {
-          if (result.response === 1) {
-            // Lepas semua pembatasan sebelum keluar
-            globalShortcut.unregisterAll();
-            app.quit();
-          }
-        });
-      event.preventDefault();
->>>>>>> e49e555fb7b17c4da25ab4168166cd19c7c502aa
       return;
     }
 
@@ -446,16 +415,11 @@ function createWindow() {
   });
 
   // --- 5. PAKSA WINDOW TETAP FOKUS & KIOSK ---
-<<<<<<< HEAD
   // Set alwaysOnTop dengan level tertinggi ('screen-saver')
-  mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  mainWindow.setAlwaysOnTop(true, "screen-saver");
 
   // Jika window kehilangan fokus, LANGSUNG kembalikan fokus (tanpa delay)
-  mainWindow.on('blur', () => {
-=======
-  // Jika window kehilangan fokus, kembalikan fokus
   mainWindow.on("blur", () => {
->>>>>>> e49e555fb7b17c4da25ab4168166cd19c7c502aa
     if (mainWindow && !mainWindow.isDestroyed()) {
       // Langsung rebut fokus kembali
       mainWindow.focus();
@@ -835,17 +799,6 @@ ipcMain.handle("get-battery-info", async () => {
 });
 
 // --- IPC: REQUEST EXIT (tombol keluar di taskbar) ---
-<<<<<<< HEAD
-// Konfirmasi ditangani oleh SweetAlert di renderer, handler ini hanya return true
-ipcMain.handle('request-exit', async () => {
-  return true;
-});
-
-// --- IPC: CONFIRM EXIT (dipanggil setelah user konfirmasi via SweetAlert) ---
-ipcMain.handle('confirm-exit', async () => {
-  globalShortcut.unregisterAll();
-  app.quit();
-=======
 // Konfirmasi sudah ditangani di sisi renderer (SweetAlert / custom modal),
 // IPC ini hanya dipanggil setelah user mengkonfirmasi → langsung quit.
 ipcMain.handle("request-exit", async () => {
@@ -857,7 +810,6 @@ ipcMain.handle("request-exit", async () => {
 ipcMain.handle("request-refresh", async () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   mainWindow.webContents.reload();
->>>>>>> e49e555fb7b17c4da25ab4168166cd19c7c502aa
 });
 
 // === APP LIFECYCLE ===

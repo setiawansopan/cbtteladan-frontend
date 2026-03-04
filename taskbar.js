@@ -18,6 +18,7 @@
     <div class="cbt-tb-left">
       <span class="cbt-tb-logo">📝</span>
       <span class="cbt-tb-appname">CBT Teladan</span>
+      <span class="cbt-tb-version">v2.0.0</span>
       <span class="cbt-tb-divider">|</span>
       <span class="cbt-tb-school">SMA Negeri 1 Yogyakarta</span>
     </div>
@@ -125,6 +126,14 @@
       font-weight: 600 !important;
       color: #fff !important;
       font-size: 13px !important;
+    }
+    .cbt-tb-version {
+      font-size: 10px !important;
+      color: #5a6a8a !important;
+      background: rgba(255,255,255,0.06) !important;
+      padding: 1px 6px !important;
+      border-radius: 4px !important;
+      margin-left: 2px !important;
     }
     .cbt-tb-divider {
       color: #444 !important;
@@ -711,36 +720,6 @@
     return div.innerHTML;
   }
 
-<<<<<<< HEAD
-  // === 7. TOMBOL KELUAR (SweetAlert) ===
-  const exitBtn = document.getElementById('cbt-exit-btn');
-  exitBtn.addEventListener('click', async () => {
-    if (!window.cbtTaskbar) return;
-
-    // Cek apakah SweetAlert (Swal) tersedia di halaman web
-    if (typeof Swal !== 'undefined') {
-      const result = await Swal.fire({
-        title: 'Konfirmasi Keluar',
-        text: 'Apakah Anda yakin ingin keluar dari aplikasi ujian?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, Keluar',
-        cancelButtonText: 'Batal',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-      });
-      if (result.isConfirmed && window.cbtTaskbar.confirmExit) {
-        window.cbtTaskbar.confirmExit();
-      }
-    } else {
-      // Fallback: jika SweetAlert tidak ada, gunakan confirm bawaan browser
-      const confirmed = confirm('Apakah Anda yakin ingin keluar dari aplikasi ujian?');
-      if (confirmed && window.cbtTaskbar.confirmExit) {
-        window.cbtTaskbar.confirmExit();
-      }
-=======
   // === 7. KOMPATIBILITAS MODAL KONFIRMASI (SweetAlert) ===
   function isConfirmationModalOpen() {
     return !!document.querySelector(
@@ -749,9 +728,6 @@
   }
 
   // Gunakan flag + requestAnimationFrame untuk mencegah infinite loop:
-  // MutationObserver mengamati perubahan class di body (subtree),
-  // dan syncModalState() sendiri mengubah class body → memicu observer lagi.
-  // Tanpa debounce, ini menjadi loop tak terbatas dan menyebabkan app hang.
   let _syncModalScheduled = false;
   function syncModalState() {
     if (_syncModalScheduled) return;
@@ -798,7 +774,6 @@
 
   function openExitModal() {
     exitModal.classList.add("open");
-    // reset tombol kalau sebelumnya sudah diklik
     exitConfirmBtn.disabled = false;
     exitConfirmBtn.textContent = "Ya, Keluar";
     exitConfirmBtn.focus();
@@ -810,7 +785,6 @@
 
   exitCancelBtn.addEventListener("click", closeExitModal);
 
-  // Klik backdrop tutup modal
   exitModal.addEventListener("click", (e) => {
     if (e.target === exitModal) closeExitModal();
   });
@@ -820,7 +794,6 @@
     exitConfirmBtn.textContent = "Keluar...";
     if (window.cbtTaskbar && window.cbtTaskbar.requestExit) {
       await window.cbtTaskbar.requestExit();
->>>>>>> e49e555fb7b17c4da25ab4168166cd19c7c502aa
     }
   });
 
