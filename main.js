@@ -16,11 +16,11 @@ const EXAM_URL = "https://cbtteladan.online";
 
 // === PENANDA IDENTIFIKASI ELECTRON CLIENT ===
 // Server bisa mendeteksi client ini melalui:
-//   1. User-Agent mengandung "CBTTeladan/1.0"
+//   1. User-Agent mengandung "CBTTeladan/2.1"
 //   2. HTTP Header "X-CBT-Client: CBTTeladan"
-//   3. HTTP Header "X-CBT-Version: 1.0"
+//   3. HTTP Header "X-CBT-Version: 2.1"
 const CBT_CLIENT_ID = "CBTTeladan";
-const CBT_CLIENT_VERSION = "2.0";
+const CBT_CLIENT_VERSION = "2.1";
 
 // Daftar keyboard shortcut yang harus diblokir
 const BLOCKED_SHORTCUTS = [
@@ -171,7 +171,6 @@ function createWindow() {
     kiosk: true, // Layar penuh tanpa taskbar
     alwaysOnTop: true, // Selalu di atas aplikasi lain
     fullscreen: true, // Fullscreen sebagai fallback
-    skipTaskbar: true, // Sembunyikan dari taskbar Windows
 
     // === SEMBUNYIKAN ELEMEN UI ===
     autoHideMenuBar: true, // Sembunyikan menu bar
@@ -193,18 +192,27 @@ function createWindow() {
   mainWindow.setMenu(null);
 
   // === PENANDA 1: CUSTOM USER-AGENT ===
-  // Tambahkan "CBTTeladan/1.0" ke User-Agent string
+  // Tambahkan "CBTTeladan/2.1" ke User-Agent string
   const defaultUserAgent = mainWindow.webContents.getUserAgent();
   const customUserAgent = `${defaultUserAgent} ${CBT_CLIENT_ID}/${CBT_CLIENT_VERSION}`;
   mainWindow.webContents.setUserAgent(customUserAgent);
 
   // === PENANDA 2: CUSTOM HTTP HEADER ===
-  // Sisipkan header X-CBT-Client dan X-CBT-Version di setiap request
-  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-    details.requestHeaders["X-CBT-Client"] = CBT_CLIENT_ID;
-    details.requestHeaders["X-CBT-Version"] = CBT_CLIENT_VERSION;
-    callback({ requestHeaders: details.requestHeaders });
-  });
+  // Sisipkan header X-CBT-Client dan X-CBT-Version HANYA untuk request ke domain ujian.
+  // Tidak diaplikasikan ke domain lain (CDN, storage gambar, dll) agar tidak
+  // memicu CORS preflight yang menyebabkan gambar soal gagal ditampilkan.
+  const examHost = new URL(EXAM_URL).hostname; // "cbtteladan.online"
+  const examUrlFilter = {
+    urls: [`*://${examHost}/*`, `*://*.${examHost}/*`],
+  };
+  session.defaultSession.webRequest.onBeforeSendHeaders(
+    examUrlFilter,
+    (details, callback) => {
+      details.requestHeaders["X-CBT-Client"] = CBT_CLIENT_ID;
+      details.requestHeaders["X-CBT-Version"] = CBT_CLIENT_VERSION;
+      callback({ requestHeaders: details.requestHeaders });
+    },
+  );
 
   // Muat URL ujian
   mainWindow.loadURL(EXAM_URL);
@@ -289,11 +297,27 @@ function createWindow() {
     }
 
     if (ctrl && !shift && !alt && key === "b" && exitSequenceStep === 1) {
-      // Langkah 2: Ctrl+B ditekan setelah Ctrl+C — langsung keluar tanpa konfirmasi
+      // Langkah 2: Ctrl+B ditekan setelah Ctrl+C — tampilkan konfirmasi lalu keluar
       exitSequenceStep = 0;
       clearTimeout(exitSequenceTimer);
-      globalShortcut.unregisterAll();
-      app.quit();
+      dialog
+        .showMessageBox(mainWindow, {
+          type: "question",
+          buttons: ["Batal", "Ya, Keluar"],
+          defaultId: 0,
+          cancelId: 0,
+          title: "Konfirmasi Keluar",
+          message: "Apakah Anda yakin ingin keluar dari aplikasi ujian?",
+          noLink: true,
+        })
+        .then((result) => {
+          if (result.response === 1) {
+            // Lepas semua pembatasan sebelum keluar
+            globalShortcut.unregisterAll();
+            app.quit();
+          }
+        });
+      event.preventDefault();
       return;
     }
 
@@ -415,24 +439,16 @@ function createWindow() {
   });
 
   // --- 5. PAKSA WINDOW TETAP FOKUS & KIOSK ---
-  // Set alwaysOnTop dengan level tertinggi ('screen-saver')
-  mainWindow.setAlwaysOnTop(true, "screen-saver");
-
-  // Jika window kehilangan fokus, LANGSUNG kembalikan fokus (tanpa delay)
+  // Jika window kehilangan fokus, kembalikan fokus
   mainWindow.on("blur", () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      // Langsung rebut fokus kembali
-      mainWindow.focus();
-      mainWindow.setAlwaysOnTop(true, 'screen-saver');
-      mainWindow.setKiosk(true);
-      // Backup: coba lagi setelah 50ms untuk kasus Alt+Tab
       setTimeout(() => {
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.focus();
           mainWindow.setAlwaysOnTop(true, "screen-saver");
           mainWindow.setKiosk(true);
         }
-      }, 50);
+      }, 100);
     }
   });
 
@@ -450,19 +466,6 @@ function createWindow() {
       mainWindow.setKiosk(true);
     }
   });
-
-  // --- 5b. PERIODIC FOCUS ENFORCER ---
-  // Setiap 300ms, pastikan window tetap di atas dan fokus
-  setInterval(() => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.setAlwaysOnTop(true, 'screen-saver');
-      // Jika window tidak fokus, paksa fokus kembali
-      if (!mainWindow.isFocused()) {
-        mainWindow.focus();
-        mainWindow.setKiosk(true);
-      }
-    }
-  }, 300);
 
   // --- 6. NONAKTIFKAN KLIK KANAN (CONTEXT MENU) ---
   webContents.on("context-menu", (event) => {
