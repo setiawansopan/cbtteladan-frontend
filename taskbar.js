@@ -18,7 +18,7 @@
     <div class="cbt-tb-left">
       <span class="cbt-tb-logo">📝</span>
       <span class="cbt-tb-appname">CBT Teladan</span>
-      <span class="cbt-tb-version">v2.0.0</span>
+      <span class="cbt-tb-version">v2.2.0</span>
       <span class="cbt-tb-divider">|</span>
       <span class="cbt-tb-school">SMA Negeri 1 Yogyakarta</span>
     </div>
@@ -93,14 +93,13 @@
     }
 
     /* Saat modal konfirmasi aktif (mis. SweetAlert),
-       taskbar tidak boleh menangkap klik agar tombol modal tetap responsif.
-       z-index juga diturunkan ke 0 agar SweetAlert tampil di atasnya. */
+       z-index taskbar diturunkan agar SweetAlert tampil di atasnya.
+       TIDAK menggunakan pointer-events:none karena bisa menyebabkan
+       taskbar mati permanen jika modal dari website ujian terdeteksi.
+       SweetAlert backdrop (position:fixed inset:0) sudah cukup untuk
+       mencegah interaksi dengan taskbar saat modal aktif. */
     body.cbt-modal-active #cbt-taskbar {
-      pointer-events: none !important;
-      z-index: 0 !important;
-    }
-    body.cbt-modal-active #cbt-taskbar * {
-      pointer-events: none !important;
+      z-index: 2147483640 !important;
     }
 
     /* Pastikan container SweetAlert selalu muncul di atas taskbar */
@@ -722,9 +721,43 @@
 
   // === 7. KOMPATIBILITAS MODAL KONFIRMASI (SweetAlert) ===
   function isConfirmationModalOpen() {
-    return !!document.querySelector(
-      ".swal2-container.swal2-shown, .swal2-container.swal2-backdrop-show, .swal-overlay, .swal-modal, .sweet-alert",
+    // Cek modal keluar kita sendiri
+    const exitModal = document.getElementById("cbt-exit-modal");
+    if (exitModal && exitModal.classList.contains("open")) return true;
+
+    // SweetAlert v2: class-based detection (class dihapus saat modal ditutup)
+    const swal2 = document.querySelector(
+      ".swal2-container.swal2-shown, .swal2-container.swal2-backdrop-show",
     );
+    if (swal2) {
+      const style = window.getComputedStyle(swal2);
+      if (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        parseFloat(style.opacity) > 0
+      ) {
+        return true;
+      }
+    }
+
+    // SweetAlert v1: elemen bisa tetap di DOM setelah ditutup (hanya di-hide),
+    // jadi HARUS cek visibility agar tidak salah deteksi
+    const swalV1Selectors = [".swal-overlay", ".swal-modal", ".sweet-alert"];
+    for (const sel of swalV1Selectors) {
+      const el = document.querySelector(sel);
+      if (el) {
+        const style = window.getComputedStyle(el);
+        if (
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          parseFloat(style.opacity) > 0
+        ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   // Gunakan flag + requestAnimationFrame untuk mencegah infinite loop:

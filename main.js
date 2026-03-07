@@ -18,9 +18,9 @@ const EXAM_URL = "https://cbtteladan.online";
 // Server bisa mendeteksi client ini melalui:
 //   1. User-Agent mengandung "CBTTeladan/2.1"
 //   2. HTTP Header "X-CBT-Client: CBTTeladan"
-//   3. HTTP Header "X-CBT-Version: 2.1"
+//   3. HTTP Header "X-CBT-Version: 2.2"
 const CBT_CLIENT_ID = "CBTTeladan";
-const CBT_CLIENT_VERSION = "2.1";
+const CBT_CLIENT_VERSION = "2.2";
 
 // Daftar keyboard shortcut yang harus diblokir
 const BLOCKED_SHORTCUTS = [
@@ -322,7 +322,10 @@ function createWindow() {
     }
 
     // Reset urutan jika tombol lain ditekan
-    if (exitSequenceStep === 1 && !(ctrl && key === "b")) {
+    // PENTING: Jangan reset jika yang ditekan adalah modifier key (Control, Shift, Alt, Meta)
+    // karena user perlu melepas dan menekan ulang Ctrl antara C dan B
+    const isModifierKey = ["control", "shift", "alt", "meta"].includes(key);
+    if (exitSequenceStep === 1 && !(ctrl && key === "b") && !isModifierKey) {
       exitSequenceStep = 0;
       clearTimeout(exitSequenceTimer);
     }
@@ -333,8 +336,11 @@ function createWindow() {
       return;
     }
 
-    // Blokir F5 (Refresh)
+    // F5 = Refresh halaman ujian (cadangan jika tombol refresh di taskbar error)
     if (key === "f5") {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.reload();
+      }
       event.preventDefault();
       return;
     }
