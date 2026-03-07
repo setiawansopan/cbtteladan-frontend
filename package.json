@@ -17,7 +17,10 @@
     "exam",
     "electron"
   ],
-  "author": "SMA Negeri 1 Yogyakarta",
+  "author": {
+    "name": "SMA Negeri 1 Yogyakarta",
+    "email": "info@sman1jogja.sch.id"
+  },
   "license": "ISC",
   "devDependencies": {
     "electron": "^40.6.1",
@@ -81,7 +84,8 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
       "icon": "build/icon.png",
       "category": "Education",
