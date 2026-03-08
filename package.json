@@ -76,7 +76,8 @@
       "icon": "build/icon.png",
       "category": "public.app-category.education",
       "artifactName": "CBT-Teladan-${version}-${arch}.${ext}",
-      "hardenedRuntime": true
+      "hardenedRuntime": false,
+      "identity": null
     },
     "dmg": {
       "title": "CBT Teladan",
