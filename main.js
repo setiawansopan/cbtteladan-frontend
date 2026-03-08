@@ -535,16 +535,24 @@ ipcMain.handle("get-wifi-info", async () => {
       }
       return { connected: false };
     } else if (platform === "darwin") {
-      const output = await runCommand(
-        "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport",
-        ["-I"],
+      // Gunakan system_profiler karena airport deprecated di macOS 14.4+
+      const output = await runCommand("system_profiler", ["SPAirPortDataType"]);
+      // Cari bagian "Current Network Information" lalu ambil nama SSID di baris berikutnya
+      const currentNetMatch = output.match(
+        /Current Network Information:\s*\n\s{12,}(.+?):/m,
       );
-      const ssidMatch = output.match(/\bSSID:\s*(.+)/i);
-      const rssiMatch = output.match(/agrCtlRSSI:\s*(-?\d+)/i);
-      if (ssidMatch) {
+      if (currentNetMatch) {
+        const ssid = currentNetMatch[1].trim();
+        // Ambil RSSI dari "Signal / Noise: -49 dBm / -95 dBm"
+        const afterCurrentNet = output.substring(
+          output.indexOf("Current Network Information:"),
+        );
+        const rssiMatch = afterCurrentNet.match(
+          /Signal \/ Noise:\s*(-?\d+)\s*dBm/i,
+        );
         const rssi = rssiMatch ? parseInt(rssiMatch[1]) : -50;
         const signal = Math.min(100, Math.max(0, 2 * (rssi + 100)));
-        return { connected: true, ssid: ssidMatch[1].trim(), signal };
+        return { connected: true, ssid, signal };
       }
       return { connected: false };
     } else {
@@ -626,25 +634,75 @@ ipcMain.handle("get-wifi-networks", async () => {
 
       return networks;
     } else if (platform === "darwin") {
-      const output = await runCommand(
-        "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport",
-        ["-s"],
-      );
-      const lines = output.trim().split("\n").slice(1);
+      // Gunakan system_profiler karena airport deprecated di macOS 14.4+
+      const output = await runCommand("system_profiler", ["SPAirPortDataType"]);
       const networks = [];
-      for (const line of lines) {
-        const match = line.match(/^\s*(.+?)\s+([0-9a-f:]{17})\s+(-?\d+)/i);
-        if (match) {
-          const rssi = parseInt(match[3]);
-          const signal = Math.min(100, Math.max(0, 2 * (rssi + 100)));
-          networks.push({
-            ssid: match[1].trim(),
-            signal,
-            secured: true,
-            connected: false,
-          });
+      let currentSsid = "";
+
+      // Deteksi SSID yang sedang terkoneksi
+      const currentNetMatch = output.match(
+        /Current Network Information:\s*\n\s{12,}(.+?):/m,
+      );
+      if (currentNetMatch) {
+        currentSsid = currentNetMatch[1].trim();
+      }
+
+      // Parse jaringan dari "Current Network Information" dan "Other Local Wi-Fi Networks"
+      // Format: nama SSID diikuti properti indent
+      const networkRegex = /^\s{12,}(.+?):\s*$/gm;
+      const signalRegex = /Signal \/ Noise:\s*(-?\d+)\s*dBm/i;
+      const securityRegex = /Security:\s*(.+)/i;
+
+      // Ambil semua blok jaringan (Current + Other)
+      const sections = output.split(
+        /Current Network Information:|Other Local Wi-Fi Networks:/,
+      );
+      for (let s = 1; s < sections.length; s++) {
+        const section = sections[s];
+        // Split per jaringan: setiap jaringan dimulai dengan nama di indent 12+ spasi
+        const netBlocks = section.split(/\n(?=\s{12,}\S+.*?:\s*$)/m);
+        for (const block of netBlocks) {
+          const nameMatch = block.match(/^\s{12,}(.+?):\s*$/m);
+          if (nameMatch) {
+            const ssid = nameMatch[1].trim();
+            // Skip properti yang bukan nama jaringan (misal: PHY Mode, Channel, dll)
+            if (
+              ssid.includes("PHY Mode") ||
+              ssid.includes("Channel") ||
+              ssid.includes("Security") ||
+              ssid.includes("Network Type") ||
+              ssid.includes("Signal") ||
+              ssid.includes("Transmit") ||
+              ssid.includes("MCS") ||
+              ssid.includes("Country") ||
+              ssid.includes("BSSID")
+            )
+              continue;
+
+            const rssiMatch = block.match(signalRegex);
+            const rssi = rssiMatch ? parseInt(rssiMatch[1]) : -70;
+            const signal = Math.min(100, Math.max(0, 2 * (rssi + 100)));
+            const secMatch = block.match(securityRegex);
+            const secured = secMatch
+              ? secMatch[1].trim().toLowerCase() !== "none"
+              : true;
+            const isConnected = ssid === currentSsid;
+
+            // Hindari duplikat
+            if (!networks.find((n) => n.ssid === ssid)) {
+              networks.push({ ssid, signal, secured, connected: isConnected });
+            }
+          }
         }
       }
+
+      // Sort: connected pertama, lalu signal terkuat
+      networks.sort((a, b) => {
+        if (a.connected && !b.connected) return -1;
+        if (!a.connected && b.connected) return 1;
+        return b.signal - a.signal;
+      });
+
       return networks;
     } else {
       const output = await runCommand("nmcli", [
