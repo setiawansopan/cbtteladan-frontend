@@ -20,7 +20,7 @@ const EXAM_URL = "https://cbtteladan.online";
 //   2. HTTP Header "X-CBT-Client: CBTTeladan"
 //   3. HTTP Header "X-CBT-Version: 2.2"
 const CBT_CLIENT_ID = "CBTTeladan";
-const CBT_CLIENT_VERSION = "2.2";
+const CBT_CLIENT_VERSION = "3.0";
 
 // Daftar keyboard shortcut yang harus diblokir
 const BLOCKED_SHORTCUTS = [
@@ -339,7 +339,7 @@ function createWindow() {
     // F5 = Refresh halaman ujian (cadangan jika tombol refresh di taskbar error)
     if (key === "f5") {
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.reload();
+        mainWindow.webContents.reloadIgnoringCache();
       }
       event.preventDefault();
       return;
@@ -478,6 +478,12 @@ function createWindow() {
     event.preventDefault();
   });
 
+  // --- 8. ABAIKAN BEFOREUNLOAD DARI WEBSITE ---
+  // Mencegah halaman menahan refresh atau close karena fungsi onbeforeunload dari website ujian.
+  webContents.on("will-prevent-unload", (event) => {
+    event.preventDefault(); // Izinkan proses reload atau close untuk dilanjutkan
+  });
+
   // === 7. INJECT TASKBAR SETELAH HALAMAN DIMUAT ===
   webContents.on("did-finish-load", () => {
     try {
@@ -602,10 +608,12 @@ ipcMain.handle("get-wifi-networks", async () => {
         "mode=bssid",
       ]);
       const networks = [];
-      const blocks = output.split(/^SSID \d+ :/m);
+      const blocks = output.split(/SSID\s+\d+\s+:\s+/i);
 
       for (let i = 1; i < blocks.length; i++) {
         const block = blocks[i];
+        
+        // The first line is now the SSID name itself because we split on "SSID \d+ : "
         const name = block.split("\n")[0].trim();
         if (!name) continue;
 
@@ -747,7 +755,7 @@ ipcMain.handle("connect-wifi", async (event, ssid, password) => {
           `name="${ssid}"`,
         ]);
         // Profil ada, langsung connect
-        await runCommand("netsh", ["wlan", "connect", `name="${ssid}"`]);
+        await runCommand("netsh", ["wlan", "connect", `name="${ssid}"`, `ssid="${ssid}"`]);
         return { success: true };
       } catch {
         // Profil belum ada, buat profil baru dulu
@@ -777,7 +785,7 @@ ipcMain.handle("connect-wifi", async (event, ssid, password) => {
             "profile",
             `filename="${tempPath}"`,
           ]);
-          await runCommand("netsh", ["wlan", "connect", `name="${ssid}"`]);
+          await runCommand("netsh", ["wlan", "connect", `name="${ssid}"`, `ssid="${ssid}"`]);
           return { success: true };
         } finally {
           // Hapus file profil sementara
@@ -876,7 +884,7 @@ ipcMain.handle("request-exit", async () => {
 // --- IPC: REQUEST REFRESH (tombol refresh di taskbar) ---
 ipcMain.handle("request-refresh", async () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  mainWindow.webContents.reload();
+  mainWindow.webContents.reloadIgnoringCache();
 });
 
 // === APP LIFECYCLE ===
