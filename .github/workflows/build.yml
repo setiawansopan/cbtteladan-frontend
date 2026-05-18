@@ -6,11 +6,11 @@ on:
       - "v*"
   workflow_dispatch:
 
-# Permission untuk semua jobs
 permissions:
   contents: write
 
 jobs:
+
   # =========================================
   # BUILD WINDOWS (.exe installer)
   # =========================================
@@ -32,37 +32,13 @@ jobs:
         env:
           ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
 
-      - name: Debug - check electron
-        run: |
-          echo "Node version:"
-          node --version
-          echo "NPM version:"
-          npm --version
-          echo "Electron binary:"
-          dir node_modules\electron\dist\electron.exe
-        shell: cmd
-
-      - name: Create build resources dir
-        run: mkdir build 2>nul & echo ok
-        shell: cmd
-
       - name: Build Windows installer
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --win nsis --x64 --publish never
 
-      - name: List dist output
-        if: always()
-        shell: powershell
-        run: |
-          if (Test-Path dist) {
-            Get-ChildItem dist -Recurse | Select-Object FullName, Length
-          } else {
-            Write-Host "dist folder does not exist"
-          }
-
-      - name: Upload Windows artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: CBT-Teladan-Windows
@@ -90,16 +66,6 @@ jobs:
         env:
           ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
 
-      - name: Debug - check electron
-        run: |
-          echo "Node version: $(node --version)"
-          echo "NPM version: $(npm --version)"
-          echo "Arch: $(uname -m)"
-          ls -la node_modules/electron/dist/ | head -5
-
-      - name: Create build resources dir
-        run: mkdir -p build
-
       - name: Build macOS DMG
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
@@ -107,11 +73,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --mac dmg --publish never
 
-      - name: List dist output
-        if: always()
-        run: ls -laR dist/ 2>/dev/null || echo "dist folder does not exist"
-
-      - name: Upload macOS artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: CBT-Teladan-macOS
@@ -119,10 +81,48 @@ jobs:
           retention-days: 30
 
   # =========================================
-  # BUAT GITHUB RELEASE
+  # BUILD LINUX (.AppImage & .deb)
+  # =========================================
+  build-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
+
+      - name: Install Linux build tools
+        run: sudo apt-get install -y rpm fakeroot dpkg
+
+      - name: Build Linux packages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --linux AppImage deb --x64 --publish never
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CBT-Teladan-Linux
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+          retention-days: 30
+
+  # =========================================
+  # BUAT GITHUB RELEASE (khusus saat push tag)
   # =========================================
   release:
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
 
@@ -131,9 +131,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      - name: List artifacts
-        run: find artifacts -type f
 
       - name: Buat GitHub Release
         uses: softprops/action-gh-release@v2
@@ -145,15 +142,20 @@ jobs:
             **Aplikasi Ujian Resmi SMA Negeri 1 Yogyakarta**
 
             ### Download
-            - **Windows**: `CBT-Teladan-Setup-x.x.x.exe`
-            - **macOS**: `CBT-Teladan-x.x.x.dmg`
+            | Platform | File |
+            |----------|------|
+            | **Windows** | `CBT-Teladan-Setup-x.x.x.exe` |
+            | **macOS** | `CBT-Teladan-x.x.x.dmg` |
+            | **Linux** | `CBT-Teladan-x.x.x-linux.AppImage` atau `.deb` |
 
             ### Cara Install
-            1. Download file sesuai OS
-            2. Jalankan installer
-            3. Aplikasi akan terbuka otomatis
+            - **Windows**: Jalankan file `.exe`, installer akan berjalan otomatis
+            - **macOS**: Buka file `.dmg`, drag aplikasi ke folder Applications
+            - **Linux (AppImage)**: `chmod +x *.AppImage` lalu jalankan
+            - **Linux (deb)**: `sudo dpkg -i *.deb`
           draft: false
           prerelease: false
           files: |
             artifacts/CBT-Teladan-Windows/*
             artifacts/CBT-Teladan-macOS/*
+            artifacts/CBT-Teladan-Linux/*

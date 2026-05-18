@@ -86,7 +86,6 @@
     .check-item:nth-child(5) { animation-delay: 0.30s; }
     .check-item:nth-child(6) { animation-delay: 0.36s; }
     .check-item:nth-child(7) { animation-delay: 0.42s; }
-    .check-item:nth-child(8) { animation-delay: 0.48s; }
 
     .item-icon {
       width: 36px;
@@ -166,6 +165,7 @@
     }
     .badge-pass { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
     .badge-fail { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .badge-warn { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
 
     /* ── Footer / RUN Button ── */
     .footer {
@@ -278,18 +278,9 @@
     </div>
 
     <div class="check-item">
-      <div class="item-icon icon-sound">🔊</div>
-      <div class="item-body">
-        <div class="item-label">Kartu Suara <span class="item-req">· driver harus aktif</span></div>
-        <div class="item-value loading" id="val-sound">Memeriksa...</div>
-      </div>
-      <div class="item-status" id="status-sound"><div class="spinner"></div></div>
-    </div>
-
-    <div class="check-item">
       <div class="item-icon icon-cam">📷</div>
       <div class="item-body">
-        <div class="item-label">Kamera / Webcam <span class="item-req">· harus tersedia</span></div>
+        <div class="item-label">Kamera / Webcam <span class="item-req">· opsional</span></div>
         <div class="item-value loading" id="val-webcam">Memeriksa...</div>
       </div>
       <div class="item-status" id="status-webcam"><div class="spinner"></div></div>
@@ -328,7 +319,7 @@
   "use strict";
 
   const REQ = { cpu_cores: 2, ram_mb: 2048, display_w: 1024, display_h: 768 };
-  const results = { os: null, cpu: null, ram: null, display: null, sound: null, webcam: null, internet: null, time: null };
+  const results = { os: null, cpu: null, ram: null, display: null, internet: null, time: null };
 
   const DAYS   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
   const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli',
@@ -344,6 +335,17 @@
       : '<div class="badge badge-fail">✗</div>';
     results[id] = pass;
     evaluateAll();
+  }
+
+  function setOptional(id, found, value) {
+    const valEl    = document.getElementById('val-' + id);
+    const statusEl = document.getElementById('status-' + id);
+    valEl.textContent = value;
+    valEl.classList.remove('loading');
+    // Hijau jika terdeteksi, kuning jika tidak — tidak mempengaruhi tombol RUN
+    statusEl.innerHTML = found
+      ? '<div class="badge badge-pass">✓</div>'
+      : '<div class="badge badge-warn">—</div>';
   }
 
   function evaluateAll() {
@@ -372,9 +374,10 @@
     setCheck('time', true, timeStr);
 
     if (!window.cbtPrecheck) {
-      ['os','cpu','ram','display','sound','webcam','internet'].forEach(id =>
+      ['os','cpu','ram','display','internet'].forEach(id =>
         setCheck(id, false, 'API tidak tersedia — jalankan via Electron')
       );
+      setOptional('webcam', false, 'Tidak terdeteksi');
       return;
     }
 
@@ -389,9 +392,8 @@
     };
 
     // Jalankan semua pengecekan secara paralel
-    const [sysRes, audioRes, netRes, camRes] = await Promise.allSettled([
+    const [sysRes, netRes, camRes] = await Promise.allSettled([
       window.cbtPrecheck.getSystemInfo(),
-      window.cbtPrecheck.getAudioStatus(),
       window.cbtPrecheck.checkInternet(),
       checkWebcam(),
     ]);
@@ -419,21 +421,13 @@
       );
     }
 
-    // ── Kartu Suara ──
-    if (audioRes.status === 'fulfilled') {
-      const a = audioRes.value;
-      setCheck('sound', a.active, a.active ? (a.name || 'Aktif / OK') : 'Tidak ada perangkat audio');
-    } else {
-      setCheck('sound', false, 'Gagal memeriksa perangkat audio');
-    }
-
-    // ── Kamera / Webcam ──
+    // ── Kamera / Webcam (opsional) ──
     if (camRes.status === 'fulfilled') {
       const cam = camRes.value;
-      setCheck('webcam', cam.available,
-        cam.available ? `Terdeteksi (${cam.count} kamera)` : 'Tidak ada kamera terdeteksi');
+      setOptional('webcam', cam.available,
+        cam.available ? `Terdeteksi (${cam.count} kamera)` : 'Tidak terdeteksi');
     } else {
-      setCheck('webcam', false, 'Gagal memeriksa kamera');
+      setOptional('webcam', false, 'Tidak terdeteksi');
     }
 
     // ── Koneksi Internet ──

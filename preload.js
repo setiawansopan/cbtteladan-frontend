@@ -71,7 +71,6 @@ window.addEventListener('DOMContentLoaded', () => {
 // Tersedia via window.cbtPrecheck di precheck.html
 contextBridge.exposeInMainWorld("cbtPrecheck", {
   getSystemInfo: () => ipcRenderer.invoke("precheck-system-info"),
-  getAudioStatus: () => ipcRenderer.invoke("precheck-audio"),
   checkInternet: () => ipcRenderer.invoke("precheck-internet"),
   launchExam: () => ipcRenderer.invoke("precheck-launch-exam"),
 });

@@ -18,7 +18,7 @@
     <div class="cbt-tb-left">
       <span class="cbt-tb-logo">📝</span>
       <span class="cbt-tb-appname">CBT Teladan</span>
-      <span class="cbt-tb-version">v3.0.0</span>
+      <span class="cbt-tb-version">v4.0.0</span>
       <span class="cbt-tb-divider">|</span>
       <span class="cbt-tb-school">SMA Negeri 1 Yogyakarta</span>
     </div>

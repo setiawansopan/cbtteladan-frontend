@@ -1,6 +1,6 @@
 {
   "name": "cbt-teladan",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Aplikasi Ujian Resmi SMA Negeri 1 Yogyakarta",
   "main": "main.js",
   "scripts": {
@@ -39,6 +39,7 @@
       "main.js",
       "preload.js",
       "taskbar.js",
+      "precheck.html",
       "package.json"
     ],
     "win": {

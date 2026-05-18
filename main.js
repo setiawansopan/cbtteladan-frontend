@@ -21,7 +21,7 @@ const EXAM_URL = "https://cbtteladan.my.id";
 //   2. HTTP Header "X-CBT-Client: CBTTeladan"
 //   3. HTTP Header "X-CBT-Version: 2.2"
 const CBT_CLIENT_ID = "CBTTeladan";
-const CBT_CLIENT_VERSION = "3.0";
+const CBT_CLIENT_VERSION = "4.0";
 
 // Daftar keyboard shortcut yang harus diblokir
 const BLOCKED_SHORTCUTS = [
@@ -579,45 +579,6 @@ ipcMain.handle("precheck-system-info", async () => {
     ram:     { mb: totalMB, gb: totalGB },
     display: { width, height },
   };
-});
-
-// --- IPC: PRECHECK — STATUS KARTU SUARA ---
-ipcMain.handle("precheck-audio", async () => {
-  try {
-    const platform = process.platform;
-    if (platform === "win32") {
-      const out = await runCommand("wmic", [
-        "sounddev", "get", "Name,Status", "/Format:List",
-      ]);
-      // Cari blok pertama yang punya Status=OK
-      const blocks = out.split(/\r?\n\r?\n/);
-      for (const block of blocks) {
-        if (/Status=OK/i.test(block)) {
-          const m = block.match(/Name=(.+)/i);
-          return { active: true, name: m ? m[1].trim() : "Audio Device" };
-        }
-      }
-      return { active: false };
-    } else if (platform === "darwin") {
-      const out = await runCommand("system_profiler", ["SPAudioDataType"]);
-      if (out.includes("Output Channels:") || out.includes("Built-in Output")) {
-        return { active: true, name: "Built-in Audio" };
-      }
-      return { active: false };
-    } else {
-      // Linux: cek /proc/asound/cards
-      if (fs.existsSync("/proc/asound/cards")) {
-        const cards = fs.readFileSync("/proc/asound/cards", "utf-8").trim();
-        if (cards && !cards.includes("no soundcards")) {
-          const m = cards.match(/\[([^\]]+)\]/);
-          return { active: true, name: m ? m[1].trim() : "ALSA Audio" };
-        }
-      }
-      return { active: false };
-    }
-  } catch (err) {
-    return { active: false, error: err.message };
-  }
 });
 
 // --- IPC: PRECHECK — CEK KONEKSI INTERNET ---
