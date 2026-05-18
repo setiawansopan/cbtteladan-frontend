@@ -8,7 +8,10 @@
       "Bash(git push *)",
       "PowerShell(wsl --status 2>&1; wsl -l -v 2>&1)",
       "PowerShell(docker --version 2>&1)",
-      "PowerShell(docker info *)"
+      "PowerShell(docker info *)",
+      "Bash(npm run *)",
+      "Bash(npx electron-builder *)",
+      "Bash(npm install *)"
     ]
   }
 }
