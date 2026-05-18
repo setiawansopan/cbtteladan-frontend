@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git tag *)",
+      "Bash(git push *)",
+      "PowerShell(wsl --status 2>&1; wsl -l -v 2>&1)",
+      "PowerShell(docker --version 2>&1)",
+      "PowerShell(docker info *)"
+    ]
+  }
+}
