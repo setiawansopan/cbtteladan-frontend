@@ -10,9 +10,10 @@ const {
 const path = require("path");
 const { execFile } = require("child_process");
 const fs = require("fs");
+const os = require("os");
 
 // URL ujian yang akan dimuat
-const EXAM_URL = "https://cbtteladan.online";
+const EXAM_URL = "https://cbtteladan.my.id";
 
 // === PENANDA IDENTIFIKASI ELECTRON CLIENT ===
 // Server bisa mendeteksi client ini melalui:
@@ -201,7 +202,7 @@ function createWindow() {
   // Sisipkan header X-CBT-Client dan X-CBT-Version HANYA untuk request ke domain ujian.
   // Tidak diaplikasikan ke domain lain (CDN, storage gambar, dll) agar tidak
   // memicu CORS preflight yang menyebabkan gambar soal gagal ditampilkan.
-  const examHost = new URL(EXAM_URL).hostname; // "cbtteladan.online"
+  const examHost = new URL(EXAM_URL).hostname; // "cbtteladan.my.id"
   const examUrlFilter = {
     urls: [`*://${examHost}/*`, `*://*.${examHost}/*`],
   };
@@ -214,8 +215,8 @@ function createWindow() {
     },
   );
 
-  // Muat URL ujian
-  mainWindow.loadURL(EXAM_URL);
+  // Tampilkan halaman pre-check sebelum ujian dimulai
+  mainWindow.loadFile(path.join(__dirname, "precheck.html"));
 
   // ============================================
   // === FITUR ANTI-CURANG (LANGKAH 3) =========
@@ -479,7 +480,9 @@ function createWindow() {
   });
 
   // === 7. INJECT TASKBAR SETELAH HALAMAN DIMUAT ===
+  // Hanya inject ke halaman ujian, bukan halaman pre-check (file://)
   webContents.on("did-finish-load", () => {
+    if (!webContents.getURL().startsWith(EXAM_URL)) return;
     try {
       const taskbarCode = fs.readFileSync(
         path.join(__dirname, "taskbar.js"),
@@ -515,6 +518,160 @@ function runCommand(command, args = []) {
     );
   });
 }
+
+// =============================================
+// === IPC HANDLERS (PRE-CHECK SISTEM) =========
+// =============================================
+
+// --- IPC: PRECHECK — INFO SISTEM (OS, CPU, RAM, DISPLAY) ---
+ipcMain.handle("precheck-system-info", async () => {
+  const platform = process.platform;
+  const arch = process.arch;
+
+  // Nama OS
+  let osName;
+  try {
+    if (platform === "win32") {
+      const out = await runCommand("wmic", ["os", "get", "Caption", "/value"]);
+      const m = out.match(/Caption=(.+)/i);
+      osName = m ? m[1].trim() : "Windows";
+    } else if (platform === "darwin") {
+      const name = await runCommand("sw_vers", ["-productName"]);
+      const ver  = await runCommand("sw_vers", ["-productVersion"]);
+      osName = `${name.trim()} ${ver.trim()}`;
+    } else {
+      try {
+        const out = await runCommand("lsb_release", ["-d", "-s"]);
+        osName = out.trim().replace(/"/g, "");
+      } catch {
+        osName = "Linux";
+      }
+    }
+  } catch {
+    osName = platform === "win32" ? "Windows" : platform === "darwin" ? "macOS" : "Linux";
+  }
+
+  const archLabel = ["x64", "arm64"].includes(arch) ? "64-bit" : "32-bit";
+
+  // CPU
+  const cpus = os.cpus();
+  const cpuModel = (cpus[0]?.model || "Unknown CPU").replace(/\s+/g, " ").trim();
+  const cpuCores = cpus.length;
+
+  // RAM
+  const totalBytes = os.totalmem();
+  const totalMB = Math.round(totalBytes / (1024 * 1024));
+  const totalGB = (totalBytes / (1024 * 1024 * 1024)).toFixed(1);
+
+  // Display (dari primary display Electron)
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.size;
+
+  return {
+    os:      { name: osName, arch: archLabel },
+    cpu:     { model: cpuModel, cores: cpuCores },
+    ram:     { mb: totalMB, gb: totalGB },
+    display: { width, height },
+  };
+});
+
+// --- IPC: PRECHECK — STATUS KARTU SUARA ---
+ipcMain.handle("precheck-audio", async () => {
+  try {
+    const platform = process.platform;
+    if (platform === "win32") {
+      const out = await runCommand("wmic", [
+        "sounddev", "get", "Name,Status", "/Format:List",
+      ]);
+      // Cari blok pertama yang punya Status=OK
+      const blocks = out.split(/\r?\n\r?\n/);
+      for (const block of blocks) {
+        if (/Status=OK/i.test(block)) {
+          const m = block.match(/Name=(.+)/i);
+          return { active: true, name: m ? m[1].trim() : "Audio Device" };
+        }
+      }
+      return { active: false };
+    } else if (platform === "darwin") {
+      const out = await runCommand("system_profiler", ["SPAudioDataType"]);
+      if (out.includes("Output Channels:") || out.includes("Built-in Output")) {
+        return { active: true, name: "Built-in Audio" };
+      }
+      return { active: false };
+    } else {
+      // Linux: cek /proc/asound/cards
+      if (fs.existsSync("/proc/asound/cards")) {
+        const cards = fs.readFileSync("/proc/asound/cards", "utf-8").trim();
+        if (cards && !cards.includes("no soundcards")) {
+          const m = cards.match(/\[([^\]]+)\]/);
+          return { active: true, name: m ? m[1].trim() : "ALSA Audio" };
+        }
+      }
+      return { active: false };
+    }
+  } catch (err) {
+    return { active: false, error: err.message };
+  }
+});
+
+// --- IPC: PRECHECK — CEK KONEKSI INTERNET ---
+ipcMain.handle("precheck-internet", async () => {
+  const platform = process.platform;
+
+  // Cek konektivitas pakai domain publik (bukan domain ujian)
+  const isOnline = () =>
+    new Promise((resolve) => {
+      require("dns").lookup("www.google.com", (err) => resolve(!err));
+    });
+
+  // 1. Cek WiFi aktif dan ambil SSID
+  try {
+    let ssid = null;
+    if (platform === "win32") {
+      const out = await runCommand("netsh", ["wlan", "show", "interfaces"]);
+      const stateMatch = out.match(/State\s*:\s*(\S+)/i);
+      const ssidMatch  = out.match(/\bSSID\s*:\s*(.+)/i);
+      if (stateMatch && stateMatch[1].toLowerCase() === "connected" && ssidMatch) {
+        ssid = ssidMatch[1].trim();
+      }
+    } else if (platform === "darwin") {
+      const out = await runCommand("system_profiler", ["SPAirPortDataType"]);
+      const m = out.match(/Current Network Information:\s*\n\s{12,}(.+?):/m);
+      if (m) ssid = m[1].trim();
+    } else {
+      const out = await runCommand("nmcli", ["-t", "-f", "ACTIVE,SSID", "dev", "wifi"]);
+      for (const line of out.trim().split("\n")) {
+        const p = line.split(":");
+        if (p[0] === "yes" && p[1]) { ssid = p[1]; break; }
+      }
+    }
+    if (ssid) {
+      const connected = await isOnline();
+      return { connected, type: "wifi", name: `WiFi — ${ssid}` };
+    }
+  } catch {}
+
+  // 2. Cek LAN / Ethernet via os.networkInterfaces()
+  const nets = os.networkInterfaces();
+  for (const [ifName, addrs] of Object.entries(nets)) {
+    if (/loopback|^lo$/i.test(ifName)) continue;
+    if (/wi.?fi|wlan|wireless/i.test(ifName)) continue;
+    const hasIp = addrs.some((a) => a.family === "IPv4" && !a.internal);
+    if (hasIp) {
+      const connected = await isOnline();
+      return { connected, type: "lan", name: "LAN / Ethernet" };
+    }
+  }
+
+  return { connected: false, type: "none", name: "Tidak Terhubung" };
+});
+
+// --- IPC: PRECHECK — LUNCURKAN UJIAN ---
+ipcMain.handle("precheck-launch-exam", () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.loadURL(EXAM_URL);
+  }
+});
 
 // --- IPC: GET WIFI INFO (koneksi saat ini) ---
 ipcMain.handle("get-wifi-info", async () => {
@@ -883,6 +1040,11 @@ ipcMain.handle("request-refresh", async () => {
 
 // Ketika Electron sudah siap, buat window dan daftarkan global shortcut blocker
 app.whenReady().then(() => {
+  // === IZINKAN AKSES KAMERA UNTUK WEBCAM PREVIEW ===
+  session.defaultSession.setPermissionRequestHandler((wc, permission, callback) => {
+    callback(permission === "media");
+  });
+
   createWindow();
 
   // === CEK DUAL MONITOR SAAT STARTUP ===

@@ -886,4 +886,93 @@
 
   // Update baterai setiap 30 detik
   setInterval(updateBatteryInfo, 30000);
+
+  // === 10. WEBCAM PREVIEW (EFEK PSIKOLOGIS PENGAWASAN) ===
+  (async function () {
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) return;
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 320 }, height: { ideal: 240 } },
+        audio: false,
+      });
+
+      // Inject CSS webcam preview
+      const camStyle = document.createElement("style");
+      camStyle.textContent = `
+        #cbt-cam-wrap {
+          position: fixed !important;
+          top: 12px !important;
+          right: 12px !important;
+          width: 152px !important;
+          border-radius: 10px !important;
+          overflow: hidden !important;
+          background: #000 !important;
+          border: 2px solid rgba(239, 68, 68, 0.55) !important;
+          box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.12),
+                      0 6px 24px rgba(0, 0, 0, 0.6) !important;
+          z-index: 2147483643 !important;
+          user-select: none !important;
+          -webkit-user-select: none !important;
+        }
+        #cbt-cam-video {
+          width: 100% !important;
+          display: block !important;
+          transform: scaleX(-1) !important;
+          aspect-ratio: 4 / 3 !important;
+          object-fit: cover !important;
+          background: #111 !important;
+        }
+        #cbt-cam-bar {
+          position: absolute !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          padding: 5px 8px !important;
+          background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 100%) !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 5px !important;
+        }
+        #cbt-cam-dot {
+          width: 7px !important;
+          height: 7px !important;
+          background: #ef4444 !important;
+          border-radius: 50% !important;
+          flex-shrink: 0 !important;
+          animation: cbt-cam-pulse 1.4s ease infinite !important;
+        }
+        @keyframes cbt-cam-pulse {
+          0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(239, 68, 68, 0.8); }
+          50%       { opacity: 0.3; box-shadow: none; }
+        }
+        #cbt-cam-label {
+          font-size: 10px !important;
+          font-weight: 700 !important;
+          color: #fff !important;
+          letter-spacing: 0.1em !important;
+          font-family: 'Segoe UI', sans-serif !important;
+          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+        }
+      `;
+      document.head.appendChild(camStyle);
+
+      // Inject elemen preview
+      const wrap = document.createElement("div");
+      wrap.id = "cbt-cam-wrap";
+      wrap.innerHTML = `
+        <video id="cbt-cam-video" autoplay muted playsinline></video>
+        <div id="cbt-cam-bar">
+          <div id="cbt-cam-dot"></div>
+          <span id="cbt-cam-label">LIVE</span>
+        </div>
+      `;
+      document.body.appendChild(wrap);
+
+      document.getElementById("cbt-cam-video").srcObject = stream;
+    } catch {
+      // Kamera tidak tersedia atau akses ditolak — tidak ditampilkan
+    }
+  })();
+
 })();

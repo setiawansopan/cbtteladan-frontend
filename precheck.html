@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pengecekan Sistem — CBT Teladan</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0f0f1a;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 580px;
+      animation: fadeInUp 0.45s ease both;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .header-logo {
+      font-size: 38px;
+      line-height: 1;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .header-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .header-subtitle {
+      font-size: 12px;
+      color: #8892b0;
+      line-height: 1.5;
+    }
+
+    /* ── Check List Card ── */
+    .check-list {
+      background: #1a1a2e;
+      border: 1px solid #0f3460;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 18px;
+      border-bottom: 1px solid rgba(15, 52, 96, 0.55);
+      animation: fadeIn 0.3s ease both;
+    }
+    .check-item:last-child { border-bottom: none; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* Stagger */
+    .check-item:nth-child(1) { animation-delay: 0.06s; }
+    .check-item:nth-child(2) { animation-delay: 0.12s; }
+    .check-item:nth-child(3) { animation-delay: 0.18s; }
+    .check-item:nth-child(4) { animation-delay: 0.24s; }
+    .check-item:nth-child(5) { animation-delay: 0.30s; }
+    .check-item:nth-child(6) { animation-delay: 0.36s; }
+    .check-item:nth-child(7) { animation-delay: 0.42s; }
+    .check-item:nth-child(8) { animation-delay: 0.48s; }
+
+    .item-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .icon-os    { background: rgba(59,  130, 246, 0.15); }
+    .icon-cpu   { background: rgba(249, 115,  22, 0.15); }
+    .icon-ram   { background: rgba(168,  85, 247, 0.15); }
+    .icon-disp  { background: rgba( 20, 184, 166, 0.15); }
+    .icon-sound { background: rgba(234, 179,   8, 0.15); }
+    .icon-cam   { background: rgba(236,  72, 153, 0.15); }
+    .icon-net   { background: rgba( 34, 197,  94, 0.15); }
+    .icon-time  { background: rgba( 99, 102, 241, 0.15); }
+
+    .item-body { flex: 1; min-width: 0; }
+
+    .item-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #8892b0;
+      margin-bottom: 2px;
+    }
+    .item-req {
+      font-size: 9px;
+      color: #3a4a5e;
+      margin-left: 4px;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .item-value {
+      font-size: 13px;
+      color: #c9d1d9;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .item-value.loading { color: #3a4a6a; }
+
+    /* ── Status Indicators ── */
+    .item-status {
+      flex-shrink: 0;
+      width: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(15, 52, 96, 0.9);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .badge-pass { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .badge-fail { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+    /* ── Footer / RUN Button ── */
+    .footer {
+      margin-top: 18px;
+      text-align: center;
+    }
+
+    #run-btn {
+      width: 100%;
+      padding: 15px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      transition: all 0.2s ease;
+      background: #1a1f2e;
+      color: #2d3a4a;
+      cursor: not-allowed;
+    }
+    #run-btn.ready {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 22px rgba(34, 197, 94, 0.30);
+      animation: btnPulse 2.5s ease infinite;
+    }
+    #run-btn.ready:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(34, 197, 94, 0.45);
+      animation: none;
+    }
+    #run-btn.ready:active { transform: translateY(0); }
+    #run-btn.launching {
+      background: #16a34a;
+      color: #fff;
+      cursor: not-allowed;
+      animation: none;
+    }
+
+    @keyframes btnPulse {
+      0%, 100% { box-shadow: 0 4px 22px rgba(34, 197, 94, 0.30); }
+      50%       { box-shadow: 0 4px 30px rgba(34, 197, 94, 0.55); }
+    }
+
+    #status-note {
+      margin-top: 10px;
+      font-size: 11.5px;
+      color: #3a4a5e;
+      min-height: 16px;
+      transition: color 0.3s;
+    }
+
+    .app-footer {
+      margin-top: 18px;
+      font-size: 11px;
+      color: #1e2535;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <span class="header-logo">📋</span>
+    <div class="header-title">Pengecekan Sistem</div>
+    <div class="header-subtitle">Pastikan semua komponen memenuhi syarat minimum sebelum memulai ujian.</div>
+  </div>
+
+  <!-- Check List -->
+  <div class="check-list">
+
+    <div class="check-item">
+      <div class="item-icon icon-os">💻</div>
+      <div class="item-body">
+        <div class="item-label">Sistem Operasi</div>
+        <div class="item-value loading" id="val-os">Memeriksa...</div>
+      </div>
+      <div class="item-status" id="status-os"><div class="spinner"></div></div>
+    </div>
+
+    <div class="check-item">
+      <div class="item-icon icon-cpu">⚙️</div>
+      <div class="item-body">
+        <div class="item-label">Prosesor <span class="item-req">· min. 2 core</span></div>
+        <div class="item-value loading" id="val-cpu">Memeriksa...</div>
+      </div>
+      <div class="item-status" id="status-cpu"><div class="spinner"></div></div>
+    </div>
+
+    <div class="check-item">
+      <div class="item-icon icon-ram">💾</div>
+      <div class="item-body">
+        <div class="item-label">Memori RAM <span class="item-req">· min. 2 GB</span></div>
+        <div class="item-value loading" id="val-ram">Memeriksa...</div>
+      </div>
+      <div class="item-status" id="status-ram"><div class="spinner"></div></div>
+    </div>
+
+    <div class="check-item">
+      <div class="item-icon icon-disp">🖥️</div>
+      <div class="item-body">
+        <div class="item-label">Resolusi Layar <span class="item-req">· min. 1024 × 768</span></div>
+        <div class="item-value loading" id="val-display">Memeriksa...</div>
+      </div>
+      <div class="item-status" id="status-display"><div class="spinner"></div></div>
+    </div>
+
+    <div class="check-item">
+      <div class="item-icon icon-sound">🔊</div>
+      <div class="item-body">
+        <div class="item-label">Kartu Suara <span class="item-req">· driver harus aktif</span></div>
+        <div class="item-value loading" id="val-sound">Memeriksa...</div>
+      </div>
+      <div class="item-status" id="status-sound"><div class="spinner"></div></div>
+    </div>
+
+    <div class="check-item">
+      <div class="item-icon icon-cam">📷</div>
+      <div class="item-body">
+        <div class="item-label">Kamera / Webcam <span class="item-req">· harus tersedia</span></div>
+        <div class="item-value loading" id="val-webcam">Memeriksa...</div>
+      </div>
+      <div class="item-status" id="status-webcam"><div class="spinner"></div></div>
+    </div>
+
+    <div class="check-item">
+      <div class="item-icon icon-net">🌐</div>
+      <div class="item-body">
+        <div class="item-label">Koneksi Internet <span class="item-req">· harus terhubung</span></div>
+        <div class="item-value loading" id="val-internet">Memeriksa...</div>
+      </div>
+      <div class="item-status" id="status-internet"><div class="spinner"></div></div>
+    </div>
+
+    <div class="check-item">
+      <div class="item-icon icon-time">🕐</div>
+      <div class="item-body">
+        <div class="item-label">Waktu Komputer</div>
+        <div class="item-value loading" id="val-time">Memeriksa...</div>
+      </div>
+      <div class="item-status" id="status-time"><div class="spinner"></div></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button id="run-btn" disabled>▶&nbsp;&nbsp;MULAI UJIAN</button>
+    <div id="status-note">Mohon tunggu, sistem sedang diperiksa...</div>
+  </div>
+
+  <div class="app-footer">CBT Teladan · SMA Negeri 1 Yogyakarta</div>
+</div>
+
+<script>
+  "use strict";
+
+  const REQ = { cpu_cores: 2, ram_mb: 2048, display_w: 1024, display_h: 768 };
+  const results = { os: null, cpu: null, ram: null, display: null, sound: null, webcam: null, internet: null, time: null };
+
+  const DAYS   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli',
+                  'Agustus','September','Oktober','November','Desember'];
+
+  function setCheck(id, pass, value) {
+    const valEl    = document.getElementById('val-' + id);
+    const statusEl = document.getElementById('status-' + id);
+    valEl.textContent = value;
+    valEl.classList.remove('loading');
+    statusEl.innerHTML = pass
+      ? '<div class="badge badge-pass">✓</div>'
+      : '<div class="badge badge-fail">✗</div>';
+    results[id] = pass;
+    evaluateAll();
+  }
+
+  function evaluateAll() {
+    const done    = Object.values(results).every(v => v !== null);
+    if (!done) return;
+    const allPass = Object.values(results).every(v => v === true);
+    const btn  = document.getElementById('run-btn');
+    const note = document.getElementById('status-note');
+    if (allPass) {
+      btn.disabled = false;
+      btn.classList.add('ready');
+      note.textContent = 'Semua komponen memenuhi syarat. Klik MULAI UJIAN untuk melanjutkan.';
+      note.style.color = '#22c55e';
+    } else {
+      const failCount = Object.values(results).filter(v => v === false).length;
+      note.textContent = `${failCount} komponen tidak memenuhi syarat minimum. Hubungi pengawas ujian.`;
+      note.style.color = '#ef4444';
+    }
+  }
+
+  async function runChecks() {
+    // Waktu — tidak perlu IPC, selalu lulus
+    const now = new Date();
+    const timeStr = `${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}` +
+                    `  —  ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    setCheck('time', true, timeStr);
+
+    if (!window.cbtPrecheck) {
+      ['os','cpu','ram','display','sound','webcam','internet'].forEach(id =>
+        setCheck(id, false, 'API tidak tersedia — jalankan via Electron')
+      );
+      return;
+    }
+
+    // Webcam — pakai browser API langsung, tidak perlu IPC
+    const checkWebcam = async () => {
+      try {
+        if (!navigator.mediaDevices?.enumerateDevices) return { available: false };
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = devices.filter(d => d.kind === 'videoinput');
+        return { available: cameras.length > 0, count: cameras.length };
+      } catch { return { available: false }; }
+    };
+
+    // Jalankan semua pengecekan secara paralel
+    const [sysRes, audioRes, netRes, camRes] = await Promise.allSettled([
+      window.cbtPrecheck.getSystemInfo(),
+      window.cbtPrecheck.getAudioStatus(),
+      window.cbtPrecheck.checkInternet(),
+      checkWebcam(),
+    ]);
+
+    // ── Sistem (OS, CPU, RAM, Display) ──
+    if (sysRes.status === 'fulfilled') {
+      const si = sysRes.value;
+
+      setCheck('os', true, `${si.os.name} (${si.os.arch})`);
+
+      const cpuPass  = si.cpu.cores >= REQ.cpu_cores;
+      const cpuLabel = si.cpu.model.length > 42
+        ? si.cpu.model.substring(0, 40) + '…'
+        : si.cpu.model;
+      setCheck('cpu', cpuPass, `${cpuLabel} — ${si.cpu.cores} Core`);
+
+      const ramPass = si.ram.mb >= REQ.ram_mb;
+      setCheck('ram', ramPass, `${si.ram.gb} GB (${si.ram.mb.toLocaleString()} MB)`);
+
+      const dispPass = si.display.width >= REQ.display_w && si.display.height >= REQ.display_h;
+      setCheck('display', dispPass, `${si.display.width} × ${si.display.height} piksel`);
+    } else {
+      ['os','cpu','ram','display'].forEach(id =>
+        setCheck(id, false, 'Gagal membaca informasi sistem')
+      );
+    }
+
+    // ── Kartu Suara ──
+    if (audioRes.status === 'fulfilled') {
+      const a = audioRes.value;
+      setCheck('sound', a.active, a.active ? (a.name || 'Aktif / OK') : 'Tidak ada perangkat audio');
+    } else {
+      setCheck('sound', false, 'Gagal memeriksa perangkat audio');
+    }
+
+    // ── Kamera / Webcam ──
+    if (camRes.status === 'fulfilled') {
+      const cam = camRes.value;
+      setCheck('webcam', cam.available,
+        cam.available ? `Terdeteksi (${cam.count} kamera)` : 'Tidak ada kamera terdeteksi');
+    } else {
+      setCheck('webcam', false, 'Gagal memeriksa kamera');
+    }
+
+    // ── Koneksi Internet ──
+    if (netRes.status === 'fulfilled') {
+      const net = netRes.value;
+      setCheck('internet', net.connected, net.name || (net.connected ? 'Terhubung' : 'Tidak Terhubung'));
+    } else {
+      setCheck('internet', false, 'Gagal memeriksa koneksi');
+    }
+  }
+
+  // Tombol RUN
+  document.getElementById('run-btn').addEventListener('click', async () => {
+    if (!window.cbtPrecheck) return;
+    const btn  = document.getElementById('run-btn');
+    const note = document.getElementById('status-note');
+    btn.disabled = true;
+    btn.classList.remove('ready');
+    btn.classList.add('launching');
+    btn.textContent = '⏳  Memuat ujian...';
+    note.textContent = 'Membuka halaman ujian, harap tunggu...';
+    note.style.color = '#8892b0';
+    await window.cbtPrecheck.launchExam();
+  });
+
+  runChecks();
+</script>
+</body>
+</html>

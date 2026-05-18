@@ -67,6 +67,15 @@ window.addEventListener('DOMContentLoaded', () => {
   }, true);
 });
 
+// === BRIDGE PRE-CHECK: API untuk halaman pengecekan sistem ===
+// Tersedia via window.cbtPrecheck di precheck.html
+contextBridge.exposeInMainWorld("cbtPrecheck", {
+  getSystemInfo: () => ipcRenderer.invoke("precheck-system-info"),
+  getAudioStatus: () => ipcRenderer.invoke("precheck-audio"),
+  checkInternet: () => ipcRenderer.invoke("precheck-internet"),
+  launchExam: () => ipcRenderer.invoke("precheck-launch-exam"),
+});
+
 // === BRIDGE AMAN: Expose API ke renderer tanpa akses Node.js langsung ===
 // Semua fungsi di sini bisa dipanggil dari halaman web via window.cbtTaskbar
 contextBridge.exposeInMainWorld("cbtTaskbar", {
