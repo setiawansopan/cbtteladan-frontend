@@ -18,7 +18,7 @@
     <div class="cbt-tb-left">
       <span class="cbt-tb-logo">📝</span>
       <span class="cbt-tb-appname">CBT Teladan</span>
-      <span class="cbt-tb-version">v2.2.0</span>
+      <span class="cbt-tb-version">v3.0.0</span>
       <span class="cbt-tb-divider">|</span>
       <span class="cbt-tb-school">SMA Negeri 1 Yogyakarta</span>
     </div>
@@ -832,7 +832,7 @@
 
   // Fungsi utama: coba Swal dulu, fallback ke modal kustom
   function showExitConfirm() {
-    if (typeof Swal !== "undefined") {
+    if (typeof Swal !== "undefined" && typeof Swal.fire === "function") {
       Swal.fire({
         title: "Keluar Aplikasi?",
         html: "Apakah Anda yakin ingin keluar<br>dari aplikasi ujian CBT Teladan?",
