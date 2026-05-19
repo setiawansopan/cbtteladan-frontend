@@ -349,20 +349,19 @@
   }
 
   function evaluateAll() {
-    const done    = Object.values(results).every(v => v !== null);
+    const done = Object.values(results).every(v => v !== null);
     if (!done) return;
-    const allPass = Object.values(results).every(v => v === true);
     const btn  = document.getElementById('run-btn');
     const note = document.getElementById('status-note');
-    if (allPass) {
-      btn.disabled = false;
-      btn.classList.add('ready');
+    const failCount = Object.values(results).filter(v => v === false).length;
+    btn.disabled = false;
+    btn.classList.add('ready');
+    if (failCount === 0) {
       note.textContent = 'Semua komponen memenuhi syarat. Klik MULAI UJIAN untuk melanjutkan.';
       note.style.color = '#22c55e';
     } else {
-      const failCount = Object.values(results).filter(v => v === false).length;
-      note.textContent = `${failCount} komponen tidak memenuhi syarat minimum. Hubungi pengawas ujian.`;
-      note.style.color = '#ef4444';
+      note.textContent = `Perhatian: ${failCount} komponen tidak memenuhi syarat. Informasikan ke pengawas jika diperlukan.`;
+      note.style.color = '#f59e0b';
     }
   }
 

@@ -903,7 +903,7 @@
         #cbt-cam-wrap {
           position: fixed !important;
           top: 12px !important;
-          right: 12px !important;
+          left: 12px !important;
           width: 152px !important;
           border-radius: 10px !important;
           overflow: hidden !important;
