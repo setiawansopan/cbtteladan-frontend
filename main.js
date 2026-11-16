@@ -226,7 +226,7 @@ function createWindow() {
       details.requestHeaders["X-CBT-Client"] = CBT_CLIENT_ID;
       details.requestHeaders["X-CBT-Version"] = CBT_CLIENT_VERSION;
 
-      const signed = signRequest(CBT_APP_SECRET, details.method, details.url);
+      const signed = signRequest(CBT_APP_SECRET);
       if (signed) {
         details.requestHeaders["X-CBT-Timestamp"] = signed.timestamp;
         details.requestHeaders["X-CBT-Signature"] = signed.signature;

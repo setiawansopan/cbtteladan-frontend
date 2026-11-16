@@ -5,7 +5,7 @@
 ### ✨ Features
 
 - **Tanda tangan request untuk wajib aplikasi**
-  - Setiap request ke domain ujian membawa header `X-CBT-Timestamp` dan `X-CBT-Signature` (HMAC-SHA256 atas `timestamp.METHOD.path`).
+  - Setiap request ke domain ujian membawa header `X-CBT-Timestamp` dan `X-CBT-Signature` (HMAC-SHA256 atas timestamp, sama dengan aplikasi Android).
   - Kunci diambil saat build dari GitHub Secret `CBT_APP_SECRET` (`scripts/write-secret.js`), tidak disimpan di repo.
   - Build rilis (tag `v*`) gagal bila kunci belum diisi, agar tidak ada rilis yang ditolak server.
   - Server CBT Teladan memakai ini untuk membedakan aplikasi resmi dari browser yang memalsukan User-Agent.
