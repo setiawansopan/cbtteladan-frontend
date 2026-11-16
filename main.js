@@ -11,17 +11,31 @@ const path = require("path");
 const { execFile } = require("child_process");
 const fs = require("fs");
 const os = require("os");
+const { signRequest } = require("./signature");
+
+// Kunci tanda tangan request, ditulis saat build oleh scripts/write-secret.js
+// dari secret CBT_APP_SECRET. Tidak ada di repo; build tanpa kunci tidak
+// mengirim tanda tangan.
+let CBT_APP_SECRET = "";
+try {
+  CBT_APP_SECRET = require("./app-secret.js");
+} catch {
+  console.warn("app-secret.js tidak ditemukan: request tidak ditandatangani.");
+}
 
 // URL ujian yang akan dimuat
 const EXAM_URL = "https://cbtteladan.my.id";
 
 // === PENANDA IDENTIFIKASI ELECTRON CLIENT ===
-// Server bisa mendeteksi client ini melalui:
-//   1. User-Agent mengandung "CBTTeladan/2.1"
-//   2. HTTP Header "X-CBT-Client: CBTTeladan"
-//   3. HTTP Header "X-CBT-Version: 2.2"
+// Server mengenali aplikasi ini melalui:
+//   1. User-Agent mengandung "cbt-teladan/<versi>" (bawaan Electron) dan
+//      "CBTTeladan/<versi>"
+//   2. HTTP Header "X-CBT-Client: CBTTeladan" dan "X-CBT-Version: <versi>"
+//   3. HTTP Header "X-CBT-Timestamp" + "X-CBT-Signature" (sejak v5)
+// Versi diambil dari package.json agar User-Agent dan header selalu sama.
+// Server menolak siswa dengan versi di bawah versi minimum (mis. 5.0.0).
 const CBT_CLIENT_ID = "CBTTeladan";
-const CBT_CLIENT_VERSION = "4.0";
+const CBT_CLIENT_VERSION = app.getVersion();
 
 // Daftar keyboard shortcut yang harus diblokir
 const BLOCKED_SHORTCUTS = [
@@ -211,6 +225,13 @@ function createWindow() {
     (details, callback) => {
       details.requestHeaders["X-CBT-Client"] = CBT_CLIENT_ID;
       details.requestHeaders["X-CBT-Version"] = CBT_CLIENT_VERSION;
+
+      const signed = signRequest(CBT_APP_SECRET, details.method, details.url);
+      if (signed) {
+        details.requestHeaders["X-CBT-Timestamp"] = signed.timestamp;
+        details.requestHeaders["X-CBT-Signature"] = signed.signature;
+      }
+
       callback({ requestHeaders: details.requestHeaders });
     },
   );

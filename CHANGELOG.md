@@ -1,5 +1,25 @@
 # Changelog — CBT Teladan
 
+## v5.0.0
+
+### ✨ Features
+
+- **Tanda tangan request untuk wajib aplikasi**
+  - Setiap request ke domain ujian membawa header `X-CBT-Timestamp` dan `X-CBT-Signature` (HMAC-SHA256 atas `timestamp.METHOD.path`).
+  - Kunci diambil saat build dari GitHub Secret `CBT_APP_SECRET` (`scripts/write-secret.js`), tidak disimpan di repo.
+  - Build rilis (tag `v*`) gagal bila kunci belum diisi, agar tidak ada rilis yang ditolak server.
+  - Server CBT Teladan memakai ini untuk membedakan aplikasi resmi dari browser yang memalsukan User-Agent.
+
+### 🐛 Bug Fixes
+
+- **Versi tidak konsisten**: User-Agent menulis `cbt-teladan/4.0.1` sementara header `X-CBT-Version` masih `4.0`. Versi kini diambil dari `package.json` (`app.getVersion()`), sehingga User-Agent dan header selalu sama.
+
+### ⚠️ Penting
+
+- Server CBT Teladan dapat mewajibkan versi minimum **5.0.0** untuk siswa. Aplikasi versi 4.x ke bawah akan ditolak saat mode Wajib aktif; siswa perlu memasang versi ini.
+
+---
+
 ## v2.2.0 — 7 Maret 2026
 
 ### 🐛 Bug Fixes
