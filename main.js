@@ -24,7 +24,7 @@ try {
 }
 
 // URL ujian yang akan dimuat
-const EXAM_URL = "https://cbtteladan.my.id";
+const EXAM_URL = "https://cbtteladan.com";
 
 // === PENANDA IDENTIFIKASI ELECTRON CLIENT ===
 // Server mengenali aplikasi ini melalui:
@@ -216,7 +216,7 @@ function createWindow() {
   // Sisipkan header X-CBT-Client dan X-CBT-Version HANYA untuk request ke domain ujian.
   // Tidak diaplikasikan ke domain lain (CDN, storage gambar, dll) agar tidak
   // memicu CORS preflight yang menyebabkan gambar soal gagal ditampilkan.
-  const examHost = new URL(EXAM_URL).hostname; // "cbtteladan.my.id"
+  const examHost = new URL(EXAM_URL).hostname; // "cbtteladan.com"
   const examUrlFilter = {
     urls: [`*://${examHost}/*`, `*://*.${examHost}/*`],
   };

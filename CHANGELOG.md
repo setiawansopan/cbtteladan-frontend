@@ -4,6 +4,8 @@
 
 ### ✨ Features
 
+- **Domain ujian pindah ke `https://cbtteladan.com`** (server baru).
+
 - **Tanda tangan request untuk wajib aplikasi**
   - Setiap request ke domain ujian membawa header `X-CBT-Timestamp` dan `X-CBT-Signature` (HMAC-SHA256 atas timestamp, sama dengan aplikasi Android).
   - Kunci diambil saat build dari GitHub Secret `CBT_APP_SECRET` (`scripts/write-secret.js`), tidak disimpan di repo.

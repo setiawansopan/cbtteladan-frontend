@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CBT Teladan is an Electron-based kiosk exam application for SMA Negeri 1 Yogyakarta. It loads the exam website (`https://cbtteladan.my.id`) in a locked-down browser with anti-cheat controls, then injects a custom taskbar overlay into the page.
+CBT Teladan is an Electron-based kiosk exam application for SMA Negeri 1 Yogyakarta. It loads the exam website (`https://cbtteladan.com`) in a locked-down browser with anti-cheat controls, then injects a custom taskbar overlay into the page.
 
 ## Commands
 
@@ -55,7 +55,7 @@ The app has exactly three source files:
 
 ## Key Design Constraints
 
-**Client identification**: Main process appends `CBTTeladan/<version>` to the User-Agent (Electron already adds `cbt-teladan/<version>`) and adds `X-CBT-Client` / `X-CBT-Version` HTTP headers, but only for requests to `cbtteladan.my.id` to avoid triggering CORS preflight on CDN/image domains. The version comes from `package.json` via `app.getVersion()`; the server can enforce a minimum version for students.
+**Client identification**: Main process appends `CBTTeladan/<version>` to the User-Agent (Electron already adds `cbt-teladan/<version>`) and adds `X-CBT-Client` / `X-CBT-Version` HTTP headers, but only for requests to the exam domain (`cbtteladan.com`) to avoid triggering CORS preflight on CDN/image domains. The version comes from `package.json` via `app.getVersion()`; the server can enforce a minimum version for students.
 
 **Request signing (v5+)**: The same requests also get `X-CBT-Timestamp` and `X-CBT-Signature` (hex HMAC-SHA256 of the timestamp string, see `signature.js`; identical in the Android app and verified by the server's `StudentAccessPolicy::hasValidSignature`). The key is written to the git-ignored `app-secret.js` at build time by `scripts/write-secret.js` from the `CBT_APP_SECRET` environment variable (a GitHub Actions secret in CI); tag builds fail without it. Never commit the key.
 
