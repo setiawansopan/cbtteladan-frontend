@@ -55,7 +55,9 @@ The app has exactly three source files:
 
 ## Key Design Constraints
 
-**Client identification**: Main process appends `CBTTeladan/2.2` to the User-Agent and adds `X-CBT-Client` / `X-CBT-Version` HTTP headers, but only for requests to `cbtteladan.my.id` to avoid triggering CORS preflight on CDN/image domains.
+**Client identification**: Main process appends `CBTTeladan/<version>` to the User-Agent (Electron already adds `cbt-teladan/<version>`) and adds `X-CBT-Client` / `X-CBT-Version` HTTP headers, but only for requests to `cbtteladan.my.id` to avoid triggering CORS preflight on CDN/image domains. The version comes from `package.json` via `app.getVersion()`; the server can enforce a minimum version for students.
+
+**Request signing (v5+)**: The same requests also get `X-CBT-Timestamp` and `X-CBT-Signature` (HMAC-SHA256 of `timestamp.METHOD.path`, see `signature.js`). The key is written to the git-ignored `app-secret.js` at build time by `scripts/write-secret.js` from the `CBT_APP_SECRET` environment variable (a GitHub Actions secret in CI); tag builds fail without it. Never commit the key.
 
 **Navigation locking**: `will-navigate` and `setWindowOpenHandler` in main.js restrict all navigation and popups to the exam domain only, except `about:blank` (needed by some JS libraries before scripting).
 
