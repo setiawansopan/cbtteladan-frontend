@@ -85,7 +85,9 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
           CSC_LINK: ""
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --mac dmg --publish never
+        # Dua arsitektur: x64 untuk Mac Intel dan arm64 untuk Mac Apple Silicon
+        # (tanpa flag ini hanya arsitektur runner yang dibuat).
+        run: npx electron-builder --mac dmg --x64 --arm64 --publish never
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -166,7 +168,8 @@ jobs:
             | Platform | File |
             |----------|------|
             | **Windows** | `CBT-Teladan-Setup-x.x.x.exe` |
-            | **macOS** | `CBT-Teladan-x.x.x.dmg` |
+            | **macOS (Apple Silicon: M1/M2/M3...)** | `CBT-Teladan-x.x.x-arm64.dmg` |
+            | **macOS (Intel)** | `CBT-Teladan-x.x.x-x64.dmg` |
             | **Linux** | `CBT-Teladan-x.x.x-linux.AppImage` atau `.deb` |
 
             ### Cara Install
