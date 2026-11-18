@@ -7,8 +7,12 @@ Untuk panduan lengkap semua sistem operasi (macOS, Windows, Linux), lihat:
 
 ## 1) Pilih file installer yang sesuai
 
-- Untuk Mac Apple Silicon (M1/M2/M3): `CBT-Teladan-1.0.0-arm64.dmg`
-- Untuk Mac Intel: `CBT-Teladan-1.0.0-x64.dmg`
+- Untuk Mac Apple Silicon (M1/M2/M3): `CBT-Teladan-5.0.0-arm64.dmg`
+- Untuk Mac Intel: `CBT-Teladan-5.0.0-x64.dmg`
+
+Tidak tahu Mac kamu yang mana? Klik logo Apple di pojok kiri atas, pilih
+**Tentang Mac Ini** (About This Mac). Jika tertulis **Chip: Apple M...**, pakai
+file `-arm64`. Jika tertulis **Prosesor: Intel**, pakai file `-x64`.
 
 ## 2) Instal aplikasi
 
