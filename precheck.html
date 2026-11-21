@@ -7,9 +7,25 @@
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --faint: #94a3b8;
+      --primary: #1d4ed8;
+      --ok: #16a34a;
+      --ok-bg: #dcfce7;
+      --bad: #dc2626;
+      --bad-bg: #fee2e2;
+      --warn: #d97706;
+      --warn-bg: #fef3c7;
+    }
+
     body {
-      background: #0f0f1a;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100vh;
       display: flex;
@@ -35,32 +51,45 @@
     /* ── Header ── */
     .header {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
     }
     .header-logo {
-      font-size: 38px;
-      line-height: 1;
-      margin-bottom: 10px;
+      width: 92px;
+      height: 92px;
       display: block;
+      margin: 0 auto 8px;
+      object-fit: contain;
     }
+    .header-version {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      background: #dbeafe;
+      padding: 2px 12px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    .header-version:empty { display: none; }
     .header-title {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 700;
-      color: #fff;
+      color: var(--text);
       margin-bottom: 4px;
     }
     .header-subtitle {
-      font-size: 12px;
-      color: #8892b0;
+      font-size: 12.5px;
+      color: var(--muted);
       line-height: 1.5;
     }
 
     /* ── Check List Card ── */
     .check-list {
-      background: #1a1a2e;
-      border: 1px solid #0f3460;
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: 14px;
       overflow: hidden;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.05);
     }
 
     .check-item {
@@ -68,7 +97,7 @@
       align-items: center;
       gap: 14px;
       padding: 13px 18px;
-      border-bottom: 1px solid rgba(15, 52, 96, 0.55);
+      border-bottom: 1px solid var(--border);
       animation: fadeIn 0.3s ease both;
     }
     .check-item:last-child { border-bottom: none; }
@@ -97,42 +126,42 @@
       font-size: 17px;
       flex-shrink: 0;
     }
-    .icon-os    { background: rgba(59,  130, 246, 0.15); }
-    .icon-cpu   { background: rgba(249, 115,  22, 0.15); }
-    .icon-ram   { background: rgba(168,  85, 247, 0.15); }
-    .icon-disp  { background: rgba( 20, 184, 166, 0.15); }
-    .icon-sound { background: rgba(234, 179,   8, 0.15); }
-    .icon-cam   { background: rgba(236,  72, 153, 0.15); }
-    .icon-net   { background: rgba( 34, 197,  94, 0.15); }
-    .icon-time  { background: rgba( 99, 102, 241, 0.15); }
+    .icon-os    { background: rgba(59,  130, 246, 0.14); }
+    .icon-cpu   { background: rgba(249, 115,  22, 0.14); }
+    .icon-ram   { background: rgba(168,  85, 247, 0.14); }
+    .icon-disp  { background: rgba( 20, 184, 166, 0.14); }
+    .icon-sound { background: rgba(234, 179,   8, 0.16); }
+    .icon-cam   { background: rgba(236,  72, 153, 0.14); }
+    .icon-net   { background: rgba( 34, 197,  94, 0.14); }
+    .icon-time  { background: rgba( 99, 102, 241, 0.14); }
 
     .item-body { flex: 1; min-width: 0; }
 
     .item-label {
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.07em;
-      color: #8892b0;
+      color: var(--muted);
       margin-bottom: 2px;
     }
     .item-req {
-      font-size: 9px;
-      color: #3a4a5e;
+      font-size: 9.5px;
+      color: var(--faint);
       margin-left: 4px;
       font-weight: 400;
       text-transform: none;
       letter-spacing: 0;
     }
     .item-value {
-      font-size: 13px;
-      color: #c9d1d9;
+      font-size: 13.5px;
+      color: var(--text);
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .item-value.loading { color: #3a4a6a; }
+    .item-value.loading { color: var(--faint); }
 
     /* ── Status Indicators ── */
     .item-status {
@@ -146,7 +175,7 @@
     .spinner {
       width: 20px;
       height: 20px;
-      border: 2px solid rgba(15, 52, 96, 0.9);
+      border: 2px solid var(--border);
       border-top-color: #3b82f6;
       border-radius: 50%;
       animation: spin 0.75s linear infinite;
@@ -163,9 +192,9 @@
       font-size: 12px;
       font-weight: 700;
     }
-    .badge-pass { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
-    .badge-fail { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
-    .badge-warn { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .badge-pass { background: var(--ok-bg);   color: var(--ok); }
+    .badge-fail { background: var(--bad-bg);  color: var(--bad); }
+    .badge-warn { background: var(--warn-bg); color: var(--warn); }
 
     /* ── Footer / RUN Button ── */
     .footer {
@@ -183,20 +212,20 @@
       border-radius: 10px;
       outline: none;
       transition: all 0.2s ease;
-      background: #1a1f2e;
-      color: #2d3a4a;
+      background: #e2e8f0;
+      color: var(--faint);
       cursor: not-allowed;
     }
     #run-btn.ready {
       background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
       color: #fff;
       cursor: pointer;
-      box-shadow: 0 4px 22px rgba(34, 197, 94, 0.30);
+      box-shadow: 0 4px 18px rgba(34, 197, 94, 0.28);
       animation: btnPulse 2.5s ease infinite;
     }
     #run-btn.ready:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(34, 197, 94, 0.45);
+      box-shadow: 0 8px 26px rgba(34, 197, 94, 0.4);
       animation: none;
     }
     #run-btn.ready:active { transform: translateY(0); }
@@ -208,14 +237,14 @@
     }
 
     @keyframes btnPulse {
-      0%, 100% { box-shadow: 0 4px 22px rgba(34, 197, 94, 0.30); }
-      50%       { box-shadow: 0 4px 30px rgba(34, 197, 94, 0.55); }
+      0%, 100% { box-shadow: 0 4px 18px rgba(34, 197, 94, 0.28); }
+      50%       { box-shadow: 0 4px 26px rgba(34, 197, 94, 0.5); }
     }
 
     #status-note {
       margin-top: 10px;
-      font-size: 11.5px;
-      color: #3a4a5e;
+      font-size: 12px;
+      color: var(--muted);
       min-height: 16px;
       transition: color 0.3s;
     }
@@ -223,7 +252,7 @@
     .app-footer {
       margin-top: 18px;
       font-size: 11px;
-      color: #1e2535;
+      color: var(--faint);
       text-align: center;
     }
   </style>
@@ -233,7 +262,8 @@
 
   <!-- Header -->
   <div class="header">
-    <span class="header-logo">📋</span>
+    <img class="header-logo" src="assets/logo.png" alt="CBT Teladan">
+    <div class="header-version" id="app-version"></div>
     <div class="header-title">Pengecekan Sistem</div>
     <div class="header-subtitle">Pastikan semua komponen memenuhi syarat minimum sebelum memulai ujian.</div>
   </div>
@@ -358,10 +388,10 @@
     btn.classList.add('ready');
     if (failCount === 0) {
       note.textContent = 'Semua komponen memenuhi syarat. Klik MULAI UJIAN untuk melanjutkan.';
-      note.style.color = '#22c55e';
+      note.style.color = '#16a34a';
     } else {
       note.textContent = `Perhatian: ${failCount} komponen tidak memenuhi syarat. Informasikan ke pengawas jika diperlukan.`;
-      note.style.color = '#f59e0b';
+      note.style.color = '#d97706';
     }
   }
 
@@ -448,9 +478,15 @@
     btn.classList.add('launching');
     btn.textContent = '⏳  Memuat ujian...';
     note.textContent = 'Membuka halaman ujian, harap tunggu...';
-    note.style.color = '#8892b0';
+    note.style.color = '#64748b';
     await window.cbtPrecheck.launchExam();
   });
+
+  // Nomor versi aplikasi dikirim main.js lewat query string (?v=x.y.z)
+  const appVersion = new URLSearchParams(location.search).get('v');
+  if (appVersion) {
+    document.getElementById('app-version').textContent = 'Versi ' + appVersion;
+  }
 
   runChecks();
 </script>

@@ -6,6 +6,10 @@
 
 - **Domain ujian pindah ke `https://cbtteladan.com`** (server baru).
 
+- **Halaman pengecekan sistem bertema terang**, dengan logo CBT Teladan dan nomor versi di bawahnya.
+
+- **Taskbar:** nomor versi kini diambil dari versi aplikasi (sebelumnya tertulis mati `v4.0.0`), dan ikon Keluar serta Refresh memakai ikon gambar sehingga tidak lagi tampil sebagai kotak di Windows.
+
 - **Installer macOS untuk Mac Intel dan Apple Silicon.** Rilis kini berisi `-x64.dmg` (Intel) dan `-arm64.dmg` (Apple Silicon); sebelumnya hanya `-arm64`.
 
 - **Tanda tangan request untuk wajib aplikasi**
