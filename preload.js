@@ -72,6 +72,7 @@ window.addEventListener('DOMContentLoaded', () => {
 contextBridge.exposeInMainWorld("cbtPrecheck", {
   getSystemInfo: () => ipcRenderer.invoke("precheck-system-info"),
   checkInternet: () => ipcRenderer.invoke("precheck-internet"),
+  checkServer: () => ipcRenderer.invoke("precheck-server"),
   launchExam: () => ipcRenderer.invoke("precheck-launch-exam"),
 });
 

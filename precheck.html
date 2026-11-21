@@ -115,6 +115,7 @@
     .check-item:nth-child(5) { animation-delay: 0.30s; }
     .check-item:nth-child(6) { animation-delay: 0.36s; }
     .check-item:nth-child(7) { animation-delay: 0.42s; }
+    .check-item:nth-child(8) { animation-delay: 0.48s; }
 
     .item-icon {
       width: 36px;
@@ -133,6 +134,7 @@
     .icon-sound { background: rgba(234, 179,   8, 0.16); }
     .icon-cam   { background: rgba(236,  72, 153, 0.14); }
     .icon-net   { background: rgba( 34, 197,  94, 0.14); }
+    .icon-srv   { background: rgba( 14, 165, 233, 0.14); }
     .icon-time  { background: rgba( 99, 102, 241, 0.14); }
 
     .item-body { flex: 1; min-width: 0; }
@@ -326,6 +328,15 @@
     </div>
 
     <div class="check-item">
+      <div class="item-icon icon-srv">☁️</div>
+      <div class="item-body">
+        <div class="item-label">Server Ujian <span class="item-req">· harus terhubung</span></div>
+        <div class="item-value loading" id="val-server">Memeriksa...</div>
+      </div>
+      <div class="item-status" id="status-server"><div class="spinner"></div></div>
+    </div>
+
+    <div class="check-item">
       <div class="item-icon icon-time">🕐</div>
       <div class="item-body">
         <div class="item-label">Waktu Komputer</div>
@@ -349,7 +360,9 @@
   "use strict";
 
   const REQ = { cpu_cores: 2, ram_mb: 2048, display_w: 800, display_h: 600 };
-  const results = { os: null, cpu: null, ram: null, display: null, internet: null, time: null };
+  const results = { os: null, cpu: null, ram: null, display: null, internet: null, server: null, time: null };
+  const SLOW_SERVER_MS = 2000;
+  const warned = new Set(); // komponen yang lulus tetapi perlu diperhatikan (mis. server lambat)
 
   const DAYS   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
   const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli',
@@ -364,6 +377,18 @@
       ? '<div class="badge badge-pass">✓</div>'
       : '<div class="badge badge-fail">✗</div>';
     results[id] = pass;
+    evaluateAll();
+  }
+
+  // Lulus tetapi perlu diperhatikan: tidak menghalangi tombol, tampil sebagai peringatan
+  function setWarn(id, value) {
+    const valEl    = document.getElementById('val-' + id);
+    const statusEl = document.getElementById('status-' + id);
+    valEl.textContent = value;
+    valEl.classList.remove('loading');
+    statusEl.innerHTML = '<div class="badge badge-warn">!</div>';
+    results[id] = true;
+    warned.add(id);
     evaluateAll();
   }
 
@@ -386,7 +411,10 @@
     const failCount = Object.values(results).filter(v => v === false).length;
     btn.disabled = false;
     btn.classList.add('ready');
-    if (failCount === 0) {
+    if (failCount === 0 && warned.size > 0) {
+      note.textContent = `Perhatian: ${warned.size} komponen perlu diperhatikan. Informasikan ke pengawas jika diperlukan.`;
+      note.style.color = '#d97706';
+    } else if (failCount === 0) {
       note.textContent = 'Semua komponen memenuhi syarat. Klik MULAI UJIAN untuk melanjutkan.';
       note.style.color = '#16a34a';
     } else {
@@ -403,7 +431,7 @@
     setCheck('time', true, timeStr);
 
     if (!window.cbtPrecheck) {
-      ['os','cpu','ram','display','internet'].forEach(id =>
+      ['os','cpu','ram','display','internet','server'].forEach(id =>
         setCheck(id, false, 'API tidak tersedia — jalankan via Electron')
       );
       setOptional('webcam', false, 'Tidak terdeteksi');
@@ -421,10 +449,11 @@
     };
 
     // Jalankan semua pengecekan secara paralel
-    const [sysRes, netRes, camRes] = await Promise.allSettled([
+    const [sysRes, netRes, camRes, srvRes] = await Promise.allSettled([
       window.cbtPrecheck.getSystemInfo(),
       window.cbtPrecheck.checkInternet(),
       checkWebcam(),
+      window.cbtPrecheck.checkServer(),
     ]);
 
     // ── Sistem (OS, CPU, RAM, Display) ──
@@ -457,6 +486,20 @@
         cam.available ? `Terdeteksi (${cam.count} kamera)` : 'Tidak terdeteksi');
     } else {
       setOptional('webcam', false, 'Tidak terdeteksi');
+    }
+
+    // ── Server Ujian ──
+    if (srvRes.status === 'fulfilled' && srvRes.value) {
+      const srv = srvRes.value;
+      if (!srv.reachable) {
+        setCheck('server', false, 'Tidak dapat terhubung ke server ujian');
+      } else if (srv.ms > SLOW_SERVER_MS) {
+        setWarn('server', `Terhubung tetapi lambat (${srv.ms} ms)`);
+      } else {
+        setCheck('server', true, `Terhubung (${srv.ms} ms)`);
+      }
+    } else {
+      setCheck('server', false, 'Gagal memeriksa server');
     }
 
     // ── Koneksi Internet ──

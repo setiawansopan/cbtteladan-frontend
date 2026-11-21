@@ -5,6 +5,7 @@ const {
   dialog,
   session,
   ipcMain,
+  net,
   screen,
 } = require("electron");
 const path = require("path");
@@ -50,6 +51,21 @@ const BLOCKED_SHORTCUTS = [
   "Meta+Tab", // Task View
   "CommandOrControl+Escape", // Start Menu / Force Quit
 ];
+
+// Logo kecil untuk taskbar. Taskbar tampil di halaman https, jadi gambar
+// dikirim sebagai data URI (file lokal tidak bisa dimuat dari halaman web).
+let cachedLogoDataUri = null;
+function taskbarLogoDataUri() {
+  if (cachedLogoDataUri === null) {
+    try {
+      const png = fs.readFileSync(path.join(__dirname, "assets", "logo-small.png"));
+      cachedLogoDataUri = `data:image/png;base64,${png.toString("base64")}`;
+    } catch {
+      cachedLogoDataUri = "";
+    }
+  }
+  return cachedLogoDataUri;
+}
 
 // Variabel global untuk menyimpan referensi window
 let mainWindow = null;
@@ -521,7 +537,9 @@ function createWindow() {
       // Nomor versi di taskbar diambil dari package.json, bukan ditulis mati.
       webContents
         .executeJavaScript(
-          taskbarCode.replace("__CBT_VERSION__", CBT_CLIENT_VERSION),
+          taskbarCode
+            .replace("__CBT_VERSION__", CBT_CLIENT_VERSION)
+            .replace("__CBT_LOGO__", () => taskbarLogoDataUri()),
         )
         .catch(() => {});
     } catch (err) {
@@ -608,6 +626,46 @@ ipcMain.handle("precheck-system-info", async () => {
     ram:     { mb: totalMB, gb: totalGB },
     display: { width, height },
   };
+});
+
+// --- IPC: PRECHECK — CEK KONEKSI KE SERVER UJIAN ---
+// Memakai jaringan Chromium (net) agar ikut proxy dan sertifikat sistem,
+// sama seperti halaman ujian nanti. Endpoint /up adalah health check Laravel.
+ipcMain.handle("precheck-server", () => {
+  return new Promise((resolve) => {
+    const started = Date.now();
+    let finished = false;
+    const done = (reachable, status) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      resolve({ reachable, status: status || 0, ms: Date.now() - started });
+    };
+
+    let request;
+    const timer = setTimeout(() => {
+      done(false);
+      try {
+        request.abort();
+      } catch {
+        // permintaan sudah selesai
+      }
+    }, 8000);
+
+    try {
+      request = net.request({ method: "GET", url: `${EXAM_URL}/up` });
+      request.on("response", (response) => {
+        // Server yang menjawab (bahkan 404) berarti terjangkau
+        const code = response.statusCode;
+        done(code >= 200 && code < 500, code);
+        response.on("data", () => {});
+      });
+      request.on("error", () => done(false));
+      request.end();
+    } catch {
+      done(false);
+    }
+  });
 });
 
 // --- IPC: PRECHECK — CEK KONEKSI INTERNET ---

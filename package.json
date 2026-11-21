@@ -40,7 +40,7 @@
       "preload.js",
       "taskbar.js",
       "precheck.html",
-      "assets/logo.png",
+      "assets/*.png",
       "signature.js",
       "app-secret.js",
       "package.json"
