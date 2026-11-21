@@ -6,6 +6,10 @@
 
 - **Domain ujian pindah ke `https://cbtteladan.com`** (server baru).
 
+- **Pengecekan sistem menampilkan koneksi ke server ujian** (lulus, lambat, atau gagal beserta waktu respons), seperti di aplikasi Android.
+
+- **Taskbar bawah dirombak mengikuti aplikasi Android:** logo dan nama aplikasi dua baris, ikon jaringan dan baterai (tanpa emoji), jam di atas tanggal, serta tombol Refresh dan Keluar dengan ikon di atas label. Ringkas dan tampil sama di semua komputer.
+
 - **Halaman pengecekan sistem bertema terang**, dengan logo CBT Teladan dan nomor versi di bawahnya.
 
 - **Taskbar:** nomor versi kini diambil dari versi aplikasi (sebelumnya tertulis mati `v4.0.0`), dan ikon Keluar serta Refresh memakai ikon gambar sehingga tidak lagi tampil sebagai kotak di Windows.

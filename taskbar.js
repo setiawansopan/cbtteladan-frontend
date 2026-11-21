@@ -11,6 +11,26 @@
   const APP_VERSION = "__CBT_VERSION__";
   const versionLabel = APP_VERSION.startsWith("__") ? "" : "v" + APP_VERSION;
 
+  // Logo kecil (data URI) diganti main.js; kosong bila tidak tersedia.
+  const LOGO_SRC = "__CBT_LOGO__";
+  const logoHtml =
+    LOGO_SRC.startsWith("data:")
+      ? `<img class="cbt-tb-logo-img" src="${LOGO_SRC}" alt="">`
+      : "";
+
+  // Ikon SVG (Material) mengikuti warna teks; emoji tidak dipakai agar tampil
+  // sama di semua komputer.
+  const svg = (d) =>
+    `<svg class="cbt-tb-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
+  const ICON = {
+    wifi: svg("M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zM9 17l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zM5 13l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"),
+    battery: svg("M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"),
+    batteryCharging: svg("M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM11 20v-5.5H9L13 7v5.5h2L11 20z"),
+    plug: svg("M16.01 7L16 3h-2v4h-4V3H8v4h-.01C7 6.99 6 7.99 6 8.99v5.49L9.5 18v3h5v-3l3.5-3.51v-5.5c0-1.1-.9-2-1.99-1.99z"),
+    refresh: svg("M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"),
+    power: svg("M13 3h-2v10h2V3zm4.83 2.17-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"),
+  };
+
   // Cegah inject ganda
   if (document.getElementById("cbt-taskbar")) return;
 
@@ -20,33 +40,32 @@
 
   taskbar.innerHTML = `
     <div class="cbt-tb-left">
-      <span class="cbt-tb-logo">📝</span>
-      <span class="cbt-tb-appname">CBT Teladan</span>
-      <span class="cbt-tb-version">${versionLabel}</span>
-      <span class="cbt-tb-divider">|</span>
-      <span class="cbt-tb-school">SMA Negeri 1 Yogyakarta</span>
+      ${logoHtml}
+      <div class="cbt-tb-brand">
+        <span class="cbt-tb-appname">CBT Teladan</span>
+        <span class="cbt-tb-version">${versionLabel ? versionLabel + " · " : ""}SMA Negeri 1 Yogyakarta</span>
+      </div>
     </div>
     <div class="cbt-tb-right">
       <div class="cbt-tb-item cbt-tb-wifi" id="cbt-wifi-btn" title="Klik untuk melihat jaringan WiFi">
-        <span class="cbt-tb-icon" id="cbt-wifi-icon">📶</span>
+        <span class="cbt-tb-icon" id="cbt-wifi-icon">${ICON.wifi}</span>
         <span id="cbt-wifi-name">Memuat...</span>
       </div>
       <div class="cbt-tb-item cbt-tb-battery" id="cbt-battery-info" title="Info Baterai">
-        <span class="cbt-tb-icon" id="cbt-battery-icon">🔋</span>
+        <span class="cbt-tb-icon" id="cbt-battery-icon">${ICON.battery}</span>
         <span id="cbt-battery-text">--</span>
       </div>
       <div class="cbt-tb-item cbt-tb-clock">
-        <span class="cbt-tb-icon">🕐</span>
         <span id="cbt-clock-time">--:--</span>
         <span class="cbt-tb-date" id="cbt-clock-date">--</span>
       </div>
       <div class="cbt-tb-separator"></div>
-      <div class="cbt-tb-item cbt-tb-refresh" id="cbt-refresh-btn" title="Refresh halaman ujian">
-        <span class="cbt-tb-icon"><svg class="cbt-tb-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></span>
+      <div class="cbt-tb-action cbt-tb-refresh" id="cbt-refresh-btn" title="Refresh halaman ujian">
+        ${ICON.refresh}
         <span>Refresh</span>
       </div>
-      <div class="cbt-tb-item cbt-tb-exit" id="cbt-exit-btn" title="Keluar dari aplikasi">
-        <span class="cbt-tb-icon"><svg class="cbt-tb-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3h-2v10h2V3zm4.83 2.17-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg></span>
+      <div class="cbt-tb-action cbt-tb-exit" id="cbt-exit-btn" title="Keluar dari aplikasi">
+        ${ICON.power}
         <span>Keluar</span>
       </div>
     </div>
@@ -71,7 +90,7 @@
   style.textContent = `
     /* Geser konten halaman agar tidak tertutup taskbar */
     html {
-      margin-bottom: 44px !important;
+      margin-bottom: 52px !important;
     }
 
     /* === TASKBAR UTAMA === */
@@ -80,9 +99,9 @@
       bottom: 0 !important;
       left: 0 !important;
       right: 0 !important;
-      height: 44px !important;
-      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%) !important;
-      border-top: 1px solid #0f3460 !important;
+      height: 52px !important;
+      background: #0f172a !important;
+      border-top: 1px solid #1e3a5f !important;
       display: flex !important;
       align-items: center !important;
       justify-content: space-between !important;
@@ -116,35 +135,32 @@
       z-index: 2147483646 !important;
     }
 
-    /* Sisi kiri */
+    /* Sisi kiri: logo + nama aplikasi dua baris (sama dengan aplikasi Android) */
     .cbt-tb-left {
       display: flex !important;
       align-items: center !important;
-      gap: 8px !important;
+      gap: 10px !important;
+      min-width: 0 !important;
     }
-    .cbt-tb-logo {
-      font-size: 18px !important;
+    .cbt-tb-logo-img {
+      width: 30px !important;
+      height: 30px !important;
+      object-fit: contain !important;
+      flex-shrink: 0 !important;
+    }
+    .cbt-tb-brand {
+      display: flex !important;
+      flex-direction: column !important;
+      line-height: 1.25 !important;
     }
     .cbt-tb-appname {
-      font-weight: 600 !important;
+      font-weight: 700 !important;
       color: #fff !important;
       font-size: 13px !important;
     }
     .cbt-tb-version {
-      font-size: 10px !important;
-      color: #5a6a8a !important;
-      background: rgba(255,255,255,0.06) !important;
-      padding: 1px 6px !important;
-      border-radius: 4px !important;
-      margin-left: 2px !important;
-    }
-    .cbt-tb-divider {
-      color: #444 !important;
-      margin: 0 2px !important;
-    }
-    .cbt-tb-school {
-      color: #8892b0 !important;
-      font-size: 11px !important;
+      font-size: 10.5px !important;
+      color: #94a3b8 !important;
     }
 
     /* Sisi kanan */
@@ -154,31 +170,34 @@
       gap: 4px !important;
     }
 
-    /* Item di taskbar */
+    /* Info: jaringan, baterai, jam */
     .cbt-tb-item {
       display: flex !important;
       align-items: center !important;
       gap: 6px !important;
       padding: 4px 10px !important;
-      border-radius: 6px !important;
+      border-radius: 8px !important;
       transition: background 0.15s !important;
       cursor: default !important;
       white-space: nowrap !important;
+      color: #fff !important;
+      font-size: 12px !important;
     }
     .cbt-tb-item:hover {
       background: rgba(255,255,255,0.08) !important;
     }
     .cbt-tb-icon {
-      font-size: 16px !important;
-      line-height: 1 !important;
+      display: flex !important;
+      align-items: center !important;
     }
-
-    /* WiFi button */
     .cbt-tb-wifi {
       cursor: pointer !important;
     }
     .cbt-tb-wifi:hover {
       background: rgba(255,255,255,0.12) !important;
+    }
+    .cbt-tb-wifi.cbt-off .cbt-tb-icon {
+      opacity: 0.4 !important;
     }
 
     /* Battery warning */
@@ -191,68 +210,79 @@
       50% { opacity: 0.5; }
     }
 
-    /* Clock */
+    /* Jam di atas, tanggal di bawah */
     .cbt-tb-clock {
-      min-width: 130px !important;
+      flex-direction: column !important;
       justify-content: center !important;
+      gap: 0 !important;
+      min-width: 70px !important;
+      line-height: 1.2 !important;
+    }
+    #cbt-clock-time {
+      font-weight: 700 !important;
+      font-size: 14px !important;
+      color: #fff !important;
+      font-variant-numeric: tabular-nums !important;
+    }
+    .cbt-tb-date {
+      font-size: 10.5px !important;
+      color: #94a3b8 !important;
     }
 
     /* Separator */
     .cbt-tb-separator {
       width: 1px !important;
-      height: 24px !important;
-      background: #333 !important;
-      margin: 0 4px !important;
+      height: 30px !important;
+      background: #334155 !important;
+      margin: 0 6px !important;
     }
 
-    /* Tombol Keluar */
-    .cbt-tb-refresh {
+    /* Tombol Refresh dan Keluar: ikon di atas, label di bawah */
+    .cbt-tb-action {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 2px !important;
+      min-width: 60px !important;
+      height: 42px !important;
+      border-radius: 8px !important;
       cursor: pointer !important;
+      font-size: 10.5px !important;
+      transition: background 0.15s !important;
+    }
+    .cbt-tb-action .cbt-tb-svg {
+      width: 20px !important;
+      height: 20px !important;
+    }
+    .cbt-tb-refresh {
       color: #70a1ff !important;
-      border-radius: 6px !important;
-      transition: all 0.15s !important;
     }
     .cbt-tb-refresh:hover {
       background: rgba(112, 161, 255, 0.18) !important;
       color: #9ec1ff !important;
     }
     .cbt-tb-exit {
-      cursor: pointer !important;
       color: #ff6b6b !important;
-      border-radius: 6px !important;
-      transition: all 0.15s !important;
     }
     .cbt-tb-exit:hover {
       background: rgba(255, 107, 107, 0.15) !important;
       color: #ff4757 !important;
     }
-    .cbt-tb-exit .cbt-tb-icon {
-      font-size: 15px !important;
-    }
-    /* Ikon SVG mengikuti warna teks tombol (biru Refresh, merah Keluar) */
+
+    /* Ikon SVG mengikuti warna teks */
     .cbt-tb-svg {
-      width: 16px !important;
-      height: 16px !important;
+      width: 18px !important;
+      height: 18px !important;
       display: block !important;
       fill: currentColor !important;
-    }
-    #cbt-clock-time {
-      font-weight: 600 !important;
-      font-size: 13px !important;
-      color: #fff !important;
-      font-variant-numeric: tabular-nums !important;
-    }
-    .cbt-tb-date {
-      font-size: 11px !important;
-      color: #8892b0 !important;
-      margin-left: 4px !important;
     }
 
     /* === PANEL WiFi === */
     .cbt-wifi-panel {
       display: none;
       position: fixed !important;
-      bottom: 50px !important;
+      bottom: 58px !important;
       right: 16px !important;
       width: 320px !important;
       max-height: 380px !important;
@@ -509,17 +539,14 @@
     const now = new Date();
     const hours = String(now.getHours()).padStart(2, "0");
     const mins = String(now.getMinutes()).padStart(2, "0");
-    const secs = String(now.getSeconds()).padStart(2, "0");
 
-    const hari = HARI[now.getDay()];
+    const hari = HARI[now.getDay()].slice(0, 3);
     const tgl = now.getDate();
     const bulan = BULAN[now.getMonth()];
-    const tahun = now.getFullYear();
 
-    document.getElementById("cbt-clock-time").textContent =
-      `${hours}:${mins}:${secs}`;
+    document.getElementById("cbt-clock-time").textContent = `${hours}:${mins}`;
     document.getElementById("cbt-clock-date").textContent =
-      `${hari}, ${tgl} ${bulan} ${tahun}`;
+      `${hari}, ${tgl} ${bulan}`;
   }
   updateClock();
   setInterval(updateClock, 1000);
@@ -540,14 +567,16 @@
       const info = await window.cbtTaskbar.getWifiInfo();
       if (info && info.connected) {
         wifiNameEl.textContent = info.ssid || "Terhubung";
-        wifiIconEl.textContent = getSignalIcon(info.signal || 100);
+        wifiIconEl.innerHTML = ICON.wifi;
+        wifiBtn.classList.remove("cbt-off");
       } else {
         wifiNameEl.textContent = "Tidak terhubung";
-        wifiIconEl.textContent = "📡";
+        wifiIconEl.innerHTML = ICON.wifi;
+        wifiBtn.classList.add("cbt-off");
       }
     } catch (err) {
       wifiNameEl.textContent = "WiFi";
-      wifiIconEl.textContent = "📶";
+      wifiIconEl.innerHTML = ICON.wifi;
     }
   }
 
@@ -687,38 +716,34 @@
   const batteryIconEl = document.getElementById("cbt-battery-icon");
   const batteryInfoEl = document.getElementById("cbt-battery-info");
 
-  function getBatteryIcon(percent, charging) {
-    if (charging) return "🔌";
-    if (percent >= 80) return "🔋";
-    if (percent >= 50) return "🔋";
-    if (percent >= 20) return "🪫";
-    return "🪫";
-  }
-
   async function updateBatteryInfo() {
     try {
       if (!window.cbtTaskbar) return;
       const info = await window.cbtTaskbar.getBatteryInfo();
       if (info && info.hasBattery) {
-        batteryIconEl.textContent = getBatteryIcon(info.percent, info.charging);
+        batteryIconEl.innerHTML = info.charging
+          ? ICON.batteryCharging
+          : ICON.battery;
         batteryTextEl.textContent = `${info.percent}%`;
         batteryInfoEl.title = `Baterai: ${info.percent}%${info.charging ? " (Mengisi)" : ""}`;
 
         // Warning jika baterai rendah
         if (info.percent <= 15 && !info.charging) {
           batteryTextEl.classList.add("cbt-battery-low");
+          batteryIconEl.classList.add("cbt-battery-low");
           batteryInfoEl.title = `⚠️ Baterai Rendah: ${info.percent}%! Segera hubungkan charger.`;
         } else {
           batteryTextEl.classList.remove("cbt-battery-low");
+          batteryIconEl.classList.remove("cbt-battery-low");
         }
       } else {
         // Desktop / tidak ada baterai
-        batteryIconEl.textContent = "🔌";
+        batteryIconEl.innerHTML = ICON.plug;
         batteryTextEl.textContent = "AC";
         batteryInfoEl.title = "Daya listrik (tanpa baterai)";
       }
     } catch (err) {
-      batteryIconEl.textContent = "🔋";
+      batteryIconEl.innerHTML = ICON.battery;
       batteryTextEl.textContent = "--";
     }
   }
