@@ -237,7 +237,10 @@ function createWindow() {
   );
 
   // Tampilkan halaman pre-check sebelum ujian dimulai
-  mainWindow.loadFile(path.join(__dirname, "precheck.html"));
+  // Versi dikirim lewat query agar halaman pengecekan menampilkannya langsung.
+  mainWindow.loadFile(path.join(__dirname, "precheck.html"), {
+    query: { v: CBT_CLIENT_VERSION },
+  });
 
   // ============================================
   // === FITUR ANTI-CURANG (LANGKAH 3) =========
@@ -515,7 +518,12 @@ function createWindow() {
         path.join(__dirname, "taskbar.js"),
         "utf-8",
       );
-      webContents.executeJavaScript(taskbarCode).catch(() => {});
+      // Nomor versi di taskbar diambil dari package.json, bukan ditulis mati.
+      webContents
+        .executeJavaScript(
+          taskbarCode.replace("__CBT_VERSION__", CBT_CLIENT_VERSION),
+        )
+        .catch(() => {});
     } catch (err) {
       console.log("Gagal inject taskbar:", err.message);
     }

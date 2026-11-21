@@ -7,6 +7,10 @@
 (function () {
   "use strict";
 
+  // Diganti main.js dengan nomor versi dari package.json saat inject.
+  const APP_VERSION = "__CBT_VERSION__";
+  const versionLabel = APP_VERSION.startsWith("__") ? "" : "v" + APP_VERSION;
+
   // Cegah inject ganda
   if (document.getElementById("cbt-taskbar")) return;
 
@@ -18,7 +22,7 @@
     <div class="cbt-tb-left">
       <span class="cbt-tb-logo">📝</span>
       <span class="cbt-tb-appname">CBT Teladan</span>
-      <span class="cbt-tb-version">v4.0.0</span>
+      <span class="cbt-tb-version">${versionLabel}</span>
       <span class="cbt-tb-divider">|</span>
       <span class="cbt-tb-school">SMA Negeri 1 Yogyakarta</span>
     </div>
@@ -38,11 +42,11 @@
       </div>
       <div class="cbt-tb-separator"></div>
       <div class="cbt-tb-item cbt-tb-refresh" id="cbt-refresh-btn" title="Refresh halaman ujian">
-        <span class="cbt-tb-icon">🔄</span>
+        <span class="cbt-tb-icon"><svg class="cbt-tb-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></span>
         <span>Refresh</span>
       </div>
       <div class="cbt-tb-item cbt-tb-exit" id="cbt-exit-btn" title="Keluar dari aplikasi">
-        <span class="cbt-tb-icon">⏻</span>
+        <span class="cbt-tb-icon"><svg class="cbt-tb-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3h-2v10h2V3zm4.83 2.17-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg></span>
         <span>Keluar</span>
       </div>
     </div>
@@ -224,6 +228,13 @@
     }
     .cbt-tb-exit .cbt-tb-icon {
       font-size: 15px !important;
+    }
+    /* Ikon SVG mengikuti warna teks tombol (biru Refresh, merah Keluar) */
+    .cbt-tb-svg {
+      width: 16px !important;
+      height: 16px !important;
+      display: block !important;
+      fill: currentColor !important;
     }
     #cbt-clock-time {
       font-weight: 600 !important;
