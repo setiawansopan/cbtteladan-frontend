@@ -457,10 +457,16 @@
       to   { transform: scale(1);    opacity: 1; }
     }
     .cbt-exit-modal-icon {
-      font-size: 52px !important;
       margin-bottom: 14px !important;
       display: block !important;
+      color: #ef4444 !important;
       filter: drop-shadow(0 0 12px rgba(239,68,68,0.5)) !important;
+    }
+    /* Ikon SVG (karakter simbol daya tidak ada di font Windows dan tampil sebagai kotak) */
+    .cbt-exit-modal-icon .cbt-tb-svg {
+      width: 52px !important;
+      height: 52px !important;
+      margin: 0 auto !important;
     }
     .cbt-exit-modal-title {
       font-size: 20px !important;
@@ -827,7 +833,7 @@
   exitModal.id = "cbt-exit-modal";
   exitModal.innerHTML = `
     <div class="cbt-exit-modal-card">
-      <span class="cbt-exit-modal-icon">⏻</span>
+      <span class="cbt-exit-modal-icon">${ICON.power}</span>
       <h2 class="cbt-exit-modal-title">Keluar Aplikasi?</h2>
       <p class="cbt-exit-modal-msg">Apakah Anda yakin ingin keluar<br>dari aplikasi ujian CBT Teladan?</p>
       <div class="cbt-exit-modal-btns">
