@@ -1,6 +1,6 @@
 {
   "name": "cbt-teladan",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Aplikasi Ujian Resmi SMA Negeri 1 Yogyakarta",
   "main": "main.js",
   "scripts": {
@@ -35,6 +35,7 @@
       "output": "dist",
       "buildResources": "build"
     },
+    "afterPack": "scripts/adhoc-sign.js",
     "files": [
       "main.js",
       "preload.js",

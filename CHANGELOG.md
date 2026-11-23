@@ -1,5 +1,11 @@
 # Changelog — CBT Teladan
 
+## v5.0.1
+
+### 🐛 Bug Fixes
+
+- **macOS Apple Silicon: pesan '"CBT Teladan" is damaged and can't be opened'.** Aplikasi macOS kini ditandatangani ad-hoc saat build (`scripts/adhoc-sign.js`) dan tanda tangannya diverifikasi di CI. Pada pembukaan pertama tetap klik kanan > Open, atau jalankan `xattr -dr com.apple.quarantine "/Applications/CBT Teladan.app"`.
+
 ## v5.0.0
 
 ### ✨ Features

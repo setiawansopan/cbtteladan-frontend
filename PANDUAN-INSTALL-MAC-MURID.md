@@ -7,8 +7,8 @@ Untuk panduan lengkap semua sistem operasi (macOS, Windows, Linux), lihat:
 
 ## 1) Pilih file installer yang sesuai
 
-- Untuk Mac Apple Silicon (M1/M2/M3): `CBT-Teladan-5.0.0-arm64.dmg`
-- Untuk Mac Intel: `CBT-Teladan-5.0.0-x64.dmg`
+- Untuk Mac Apple Silicon (M1/M2/M3): `CBT-Teladan-5.0.1-arm64.dmg`
+- Untuk Mac Intel: `CBT-Teladan-5.0.1-x64.dmg`
 
 Tidak tahu Mac kamu yang mana? Klik logo Apple di pojok kiri atas, pilih
 **Tentang Mac Ini** (About This Mac). Jika tertulis **Chip: Apple M...**, pakai
@@ -21,6 +21,11 @@ file `-arm64`. Jika tertulis **Prosesor: Intel**, pakai file `-x64`.
 3. Tutup jendela installer.
 
 ## 3) Jika muncul pesan “tidak bisa dibuka”
+
+Pesan **"CBT Teladan" is damaged and can't be opened** berarti aplikasi diblokir
+karena ditandai hasil unduhan, bukan karena file rusak. Pada versi 5.0.1 ke atas
+pesan ini sudah tidak muncul. Untuk versi 5.0.0, langsung ke **Cara C** di bawah
+(Terminal).
 
 > Jangan menonaktifkan Gatekeeper untuk seluruh sistem.
 
@@ -41,7 +46,7 @@ Lakukan salah satu cara berikut:
 4. Klik **Open Anyway**.
 5. Masukkan password Mac jika diminta.
 
-## 4) Jika tetap gagal (opsi Terminal)
+## 4) Cara C: opsi Terminal (untuk pesan “is damaged” atau jika Cara A/B gagal)
 
 Buka aplikasi **Terminal**, lalu jalankan:
 
