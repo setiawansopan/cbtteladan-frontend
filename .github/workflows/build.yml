@@ -89,6 +89,17 @@ jobs:
         # (tanpa flag ini hanya arsitektur runner yang dibuat).
         run: npx electron-builder --mac dmg --x64 --arm64 --publish never
 
+      # Aplikasi ditandatangani ad-hoc oleh hook afterPack (scripts/adhoc-sign.js).
+      # Pastikan tanda tangan valid di kedua arsitektur sebelum diunggah.
+      - name: Verifikasi tanda tangan macOS
+        run: |
+          for app in dist/mac/*.app dist/mac-arm64/*.app; do
+            echo "== $app"
+            codesign --verify --deep --strict --verbose=2 "$app"
+            codesign -dv "$app" 2>&1 | grep -E "Signature|Identifier"
+            lipo -archs "$app/Contents/MacOS/CBT Teladan"
+          done
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -174,7 +185,7 @@ jobs:
 
             ### Cara Install
             - **Windows**: Jalankan file `.exe`, installer akan berjalan otomatis
-            - **macOS**: Buka file `.dmg`, drag aplikasi ke folder Applications
+            - **macOS**: Buka file `.dmg`, drag aplikasi ke folder Applications. Buka pertama kali dengan klik kanan > Open (lihat `PANDUAN-INSTALL-MAC-MURID.md`)
             - **Linux (AppImage)**: `chmod +x *.AppImage` lalu jalankan
             - **Linux (deb)**: `sudo dpkg -i *.deb`
           draft: false
