@@ -71,6 +71,31 @@
       margin-bottom: 12px;
     }
     .header-version:empty { display: none; }
+    .update-card {
+      display: none;
+      background: var(--warn-bg);
+      border: 1px solid #fcd34d;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+    .update-card.show { display: block; }
+    .update-card.required { background: var(--bad-bg); border-color: #fca5a5; }
+    .update-title { font-size: 13.5px; font-weight: 700; color: var(--warn); }
+    .update-card.required .update-title { color: var(--bad); }
+    .update-text { font-size: 12.5px; color: var(--text); margin-top: 3px; }
+    .update-btn {
+      margin-top: 9px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 7px 14px;
+      cursor: pointer;
+    }
+    .update-btn[hidden] { display: none; }
     .header-title {
       font-size: 22px;
       font-weight: 700;
@@ -268,6 +293,13 @@
     <div class="header-version" id="app-version"></div>
     <div class="header-title">Pengecekan Sistem</div>
     <div class="header-subtitle">Pastikan semua komponen memenuhi syarat minimum sebelum memulai ujian.</div>
+  </div>
+
+  <!-- Pemberitahuan versi baru (tampil bila server punya versi lebih baru) -->
+  <div class="update-card" id="update-card">
+    <div class="update-title" id="update-title"></div>
+    <div class="update-text" id="update-text"></div>
+    <button class="update-btn" id="update-btn" type="button" hidden>Unduh versi baru</button>
   </div>
 
   <!-- Check List -->
@@ -530,6 +562,33 @@
   if (appVersion) {
     document.getElementById('app-version').textContent = 'Versi ' + appVersion;
   }
+
+  // Pemberitahuan versi baru: tidak menghalangi pengecekan maupun ujian
+  (async () => {
+    try {
+      if (!window.cbtPrecheck?.checkUpdate) return;
+      const info = await window.cbtPrecheck.checkUpdate();
+      if (!info || info.status === 'none') return;
+
+      const required = info.status === 'required';
+      const card = document.getElementById('update-card');
+      card.classList.add('show');
+      card.classList.toggle('required', required);
+      document.getElementById('update-title').textContent =
+        required ? 'Perbarui aplikasi dulu' : 'Versi baru tersedia';
+      document.getElementById('update-text').textContent = required
+        ? 'Versi ' + info.current + ' sudah tidak didukung server ujian. Perbarui ke versi terbaru sebelum masuk ujian.'
+        : 'Versi ' + info.latest + ' sudah tersedia (kamu memakai ' + info.current + '). Sebaiknya perbarui sebelum ujian.';
+
+      const btn = document.getElementById('update-btn');
+      if (info.hasUrl) {
+        btn.hidden = false;
+        btn.addEventListener('click', () => window.cbtPrecheck.openUpdate());
+      }
+    } catch {
+      // Gagal memeriksa: tidak menampilkan apa pun
+    }
+  })();
 
   runChecks();
 </script>

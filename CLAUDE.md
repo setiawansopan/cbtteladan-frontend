@@ -64,3 +64,12 @@ The app has exactly three source files:
 **No code signing**: `hardenedRuntime: false`, `identity: null`, `signAndEditExecutable: false` — builds are unsigned.
 
 **No build tooling beyond electron-builder**: No TypeScript, bundler, or test framework. Changes are plain JavaScript.
+
+## Update notice
+
+`precheck-update` (main.js) fetches `https://cbtteladan.com/app-update` (public JSON set by the
+admin in Aplikasi Siswa: `desktop.latest`/`desktop.url`, `minimum`) and compares with
+`app.getVersion()` using `update-check.js` (`node --test`; keep it identical to Android's
+`UpdateCheck.kt`). The precheck page shows a card; taskbar.js gets `__CBT_UPDATE__` ("1"/"0") for a
+small marker. The download URL never crosses to the renderer: `open-update-url` opens only the
+https URL main stored. Failures are silent. `update-check.js` must stay in `build.files`.
