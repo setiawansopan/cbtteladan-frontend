@@ -7,12 +7,14 @@ const {
   ipcMain,
   net,
   screen,
+  shell,
 } = require("electron");
 const path = require("path");
 const { execFile } = require("child_process");
 const fs = require("fs");
 const os = require("os");
 const { signRequest } = require("./signature");
+const updateCheck = require("./update-check");
 
 // Kunci tanda tangan request, ditulis saat build oleh scripts/write-secret.js
 // dari secret CBT_APP_SECRET. Tidak ada di repo; build tanpa kunci tidak
@@ -539,6 +541,7 @@ function createWindow() {
         .executeJavaScript(
           taskbarCode
             .replace("__CBT_VERSION__", CBT_CLIENT_VERSION)
+            .replace("__CBT_UPDATE__", lastUpdate.status !== "none" ? "1" : "0")
             .replace("__CBT_LOGO__", () => taskbarLogoDataUri()),
         )
         .catch(() => {});
@@ -666,6 +669,76 @@ ipcMain.handle("precheck-server", () => {
       done(false);
     }
   });
+});
+
+// --- IPC: PEMBERITAHUAN VERSI BARU ---
+// Server (/app-update) berisi versi terbaru dan link unduh yang diisi admin.
+// Aplikasi hanya memberi tahu; gagal memeriksa tidak menampilkan apa pun.
+let lastUpdate = { status: "none" };
+
+ipcMain.handle("precheck-update", () => {
+  return new Promise((resolve) => {
+    let finished = false;
+    let request;
+    const done = (result) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      lastUpdate = result;
+      resolve({ status: result.status, latest: result.latest, current: result.current, hasUrl: !!result.url });
+    };
+    const none = { status: "none" };
+
+    const timer = setTimeout(() => {
+      done(none);
+      try {
+        request.abort();
+      } catch {
+        // permintaan sudah selesai
+      }
+    }, 6000);
+
+    try {
+      request = net.request({ method: "GET", url: `${EXAM_URL}/app-update` });
+      request.on("response", (response) => {
+        if (response.statusCode !== 200) {
+          response.on("data", () => {});
+          return done(none);
+        }
+        let body = "";
+        response.on("data", (chunk) => {
+          if (body.length < 8192) body += chunk.toString();
+        });
+        response.on("end", () => {
+          try {
+            const info = JSON.parse(body);
+            const latest = info?.desktop?.latest ?? null;
+            const url = updateCheck.isSafeUrl(info?.desktop?.url) ? info.desktop.url : null;
+            const minimum = info?.minimum ?? null;
+            done({
+              status: updateCheck.status(CBT_CLIENT_VERSION, latest, minimum),
+              latest,
+              current: CBT_CLIENT_VERSION,
+              url,
+            });
+          } catch {
+            done(none);
+          }
+        });
+        response.on("error", () => done(none));
+      });
+      request.on("error", () => done(none));
+      request.end();
+    } catch {
+      done(none);
+    }
+  });
+});
+
+// Buka link unduh dari server di browser. Link tidak datang dari halaman:
+// hanya yang disimpan proses utama dari /app-update yang dibuka.
+ipcMain.handle("open-update-url", () => {
+  if (lastUpdate.url) shell.openExternal(lastUpdate.url).catch(() => {});
 });
 
 // --- IPC: PRECHECK — CEK KONEKSI INTERNET ---

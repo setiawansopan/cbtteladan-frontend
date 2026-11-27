@@ -1,5 +1,12 @@
 # Changelog — CBT Teladan
 
+## v5.0.2
+
+### ✨ Features
+
+- **Pemberitahuan versi baru.** Halaman pengecekan sistem menampilkan kartu "Versi baru tersedia" dengan tombol **Unduh versi baru** (membuka link di browser) bila admin sudah mengisi versi terbaru di server (`/app-update`). Selama ujian hanya ada penanda kecil "ada versi baru" di taskbar bawah. Versi di bawah minimum server menampilkan kartu merah (login memang ditolak server sampai diperbarui).
+- Gagal memeriksa (offline atau server bermasalah) tidak menampilkan apa pun dan tidak mengganggu ujian. Aplikasi hanya memberi tahu; pemasangan tetap manual. Link hanya dibuka bila https dan berasal dari server.
+
 ## v5.0.1
 
 ### 🐛 Bug Fixes

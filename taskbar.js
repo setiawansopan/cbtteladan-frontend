@@ -11,6 +11,11 @@
   const APP_VERSION = "__CBT_VERSION__";
   const versionLabel = APP_VERSION.startsWith("__") ? "" : "v" + APP_VERSION;
 
+  // Diganti main.js: "1" bila server punya versi yang lebih baru.
+  const UPDATE_FLAG = "__CBT_UPDATE__";
+  const updateHtml =
+    UPDATE_FLAG === "1" ? `<span class="cbt-tb-update">ada versi baru</span>` : "";
+
   // Logo kecil (data URI) diganti main.js; kosong bila tidak tersedia.
   const LOGO_SRC = "__CBT_LOGO__";
   const logoHtml =
@@ -43,7 +48,7 @@
       ${logoHtml}
       <div class="cbt-tb-brand">
         <span class="cbt-tb-appname">CBT Teladan</span>
-        <span class="cbt-tb-version">${versionLabel ? versionLabel + " · " : ""}SMA Negeri 1 Yogyakarta</span>
+        <span class="cbt-tb-version">${versionLabel ? versionLabel + " · " : ""}${updateHtml || "SMA Negeri 1 Yogyakarta"}</span>
       </div>
     </div>
     <div class="cbt-tb-right">
@@ -161,6 +166,10 @@
     .cbt-tb-version {
       font-size: 10.5px !important;
       color: #94a3b8 !important;
+    }
+    .cbt-tb-update {
+      color: #fbbf24 !important;
+      font-weight: 600 !important;
     }
 
     /* Sisi kanan */

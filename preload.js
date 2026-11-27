@@ -73,6 +73,8 @@ contextBridge.exposeInMainWorld("cbtPrecheck", {
   getSystemInfo: () => ipcRenderer.invoke("precheck-system-info"),
   checkInternet: () => ipcRenderer.invoke("precheck-internet"),
   checkServer: () => ipcRenderer.invoke("precheck-server"),
+  checkUpdate: () => ipcRenderer.invoke("precheck-update"),
+  openUpdate: () => ipcRenderer.invoke("open-update-url"),
   launchExam: () => ipcRenderer.invoke("precheck-launch-exam"),
 });
 

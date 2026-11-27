@@ -1,10 +1,11 @@
 {
   "name": "cbt-teladan",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "Aplikasi Ujian Resmi SMA Negeri 1 Yogyakarta",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "test": "node --test",
     "build:win": "node scripts/write-secret.js && electron-builder --win --x64",
     "build:win:portable": "node scripts/write-secret.js && electron-builder --win portable --x64",
     "build:mac": "node scripts/write-secret.js && electron-builder --mac --x64 --arm64",
@@ -43,6 +44,7 @@
       "precheck.html",
       "assets/*.png",
       "signature.js",
+      "update-check.js",
       "app-secret.js",
       "package.json"
     ],
